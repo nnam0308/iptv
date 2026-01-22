@@ -5,7 +5,7 @@
 "image": {
     "display": "cover",
     "shape": "square",
-    "url": "https://img.vtvprime.vn/3besFRMbi8HdBDsdgQNVFnTWi7KiLruKJ7uTXobHG2g/rs:fit:836:468/czM6Ly9wcmQtc24taW1hZ2VzL2NoYW5uZWwvYzQ0ZjFjMGMtYTAzOC00ZWMxLThiZWUtNDJlNTBmMjE1YTI4LnBuZw==.png",
+    "url": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv1.png",
     "height": 101,
     "width": 155
 },
@@ -22,7 +22,7 @@
 "image": {
     "display": "cover",
     "shape": "square",
-    "url": "https://img-ali1.tv360.vn/image1/2020_09_23/1600822355845/94d27f7043a6_480_270.png",
+    "url": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv2.png",
     "height": 101,
     "width": 155
 },

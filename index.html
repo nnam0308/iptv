@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamTV - Custom Player</title>
+    
+    <!-- Material Symbols Rounded -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0" />
+    
+    <!-- Google Sans Flex -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex&display=swap" rel="stylesheet">
+    
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <style>
+        :root {
+            --bg-body: #0f172a;
+            --bg-header: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --primary-red: #dc2626;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            
+            /* Player Specs */
+            --control-bg: rgba(255, 255, 255, 0.12);
+            --control-blur: 1.125rem;
+            --btn-size: 40px;
+            --icon-size: 24px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+        body {
+            font-family: 'Google Sans Flex', sans-serif;
+            font-weight: 500;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            /* overflow: hidden; Removed as requested */
+        }
+
+        /* Material Icons Class Helper */
+        .material-symbols-rounded {
+            font-size: var(--icon-size);
+            user-select: none;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            transition: font-variation-settings 0.2s ease;
+        }
+        .material-symbols-rounded.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* --- LAYOUT UTILS --- */
+        .header-content { 
+            width: 100%; 
+            padding: 0 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 100%;
+        }
+        
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* --- HEADER --- */
+        .app-header {
+            background-color: var(--bg-header); border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 50; height: 64px; 
+            width: 100%; 
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-red); display: flex; align-items: center; text-decoration: none; }
+        .logo span { color: white; }
+        .search-container {
+            display: flex; align-items: center; background-color: var(--bg-hover);
+            border-radius: 99px; padding: 0.25rem 1rem; margin-left: auto; margin-right: 1rem;
+        }
+        .search-input { background: transparent; border: none; color: white; padding: 0.25rem; width: 150px; font-family: inherit; font-weight: inherit; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: orange; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+
+        /* --- MAIN AREA --- */
+        .app-main { 
+            padding: 1.5rem 2rem; 
+            flex-grow: 1; 
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* overflow-y: auto; Removed to allow body scroll */
+        }
+        
+        .hero-section { 
+            width: 100%;
+            max-width: 1280px; 
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        
+        .player-area { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1rem; 
+            width: 100%;
+        }
+
+        /* --- CUSTOM PLAYER CSS --- */
+        .custom-player-wrapper {
+            position: relative;
+            width: auto; 
+            height: auto;
+            max-width: 100%;
+            max-height: 70vh; 
+            aspect-ratio: 16 / 9;
+            margin: 0 auto; 
+            background-color: black;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .custom-player-wrapper.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; border-radius: 0;
+            max-width: none; max-height: none;
+        }
+        video { width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+
+        /* Watermark Logo - Removed */
+
+        /* Loader */
+        .player-loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 15; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+            color: var(--primary-red);
+        }
+        .player-loader.active { opacity: 1; }
+        .spinner { animation: spin 1s linear infinite; font-size: 48px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Controls Layer */
+        .controls-layer {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 0 0 10px 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; flex-direction: column;
+            z-index: 20; 
+        }
+        .custom-player-wrapper:hover .controls-layer,
+        .custom-player-wrapper.paused .controls-layer { opacity: 1; }
+
+        /* 1. Progress Bar */
+        .progress-container {
+            width: 100%; height: 6px; 
+            background: rgba(255,255,255,0.3);
+            cursor: pointer; pointer-events: auto; position: relative;
+            margin-bottom: 10px; transition: height 0.1s;
+        }
+        .progress-container:hover { height: 8px; }
+        
+        .progress-fill {
+            height: 100%; background: var(--primary-red); width: 100%; 
+            position: relative; transition: width 0.1s linear; 
+        }
+        .progress-handle {
+            position: absolute; right: -6px; top: 50%; transform: translateY(-50%) scale(0);
+            width: 12px; height: 12px; background: white; border-radius: 50%; transition: transform 0.1s;
+            display: block; 
+        }
+        .progress-container:hover .progress-handle { transform: translateY(-50%) scale(1); }
+
+        /* 2. Control Buttons Row */
+        .controls-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px;
+        }
+        .cp-btn {
+            border: none; color: white;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
+            border-radius: 8px; font-family: inherit; font-weight: inherit;
+        }
+        .cp-btn:hover { background: rgba(255,255,255,0.2); }
+
+        /* Left Controls */
+        .controls-left { display: flex; align-items: center; gap: 10px; }
+        .btn-play {
+            width: 40px; height: 40px;
+            background: var(--control-bg);
+            backdrop-filter: blur(var(--control-blur));
+            -webkit-backdrop-filter: blur(var(--control-blur));
+            border-radius: 999px; 
+        }
+        .volume-container {
+            display: flex; align-items: center;
+            height: 40px; width: 40px; 
+            background: var(--control-bg);
+            backdrop-filter: blur(var(--control-blur));
+            -webkit-backdrop-filter: blur(var(--control-blur));
+            border-radius: 999px; overflow: hidden;
+            transition: width 0.3s ease;
+        }
+        .volume-container:hover { width: 160px; }
+        .btn-volume { width: 40px; height: 40px; flex-shrink: 0; background: transparent; }
+        .volume-slider-wrap {
+            width: 100px; padding: 0 10px; display: flex; align-items: center;
+            opacity: 0; transition: opacity 0.2s 0.1s;
+        }
+        .volume-container:hover .volume-slider-wrap { opacity: 1; }
+        .volume-slider {
+            -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px;
+            background: rgba(255,255,255,0.3); outline: none; cursor: pointer;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white;
+        }
+
+        /* Time Display */
+        .time-display {
+            font-size: 0.85rem; font-weight: 500; color: #fff;
+            margin-left: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            display: none; min-width: 140px; 
+        }
+        
+        /* Live Badge */
+        .live-control-group {
+            display: flex; align-items: center; gap: 8px; margin-left: 8px;
+            font-size: 0.9rem; font-weight: 700; color: white;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .live-indicator { display: flex; align-items: center; gap: 8px; }
+        .live-dot {
+            width: 10px; height: 10px; background-color: var(--primary-red);
+            border-radius: 50%; box-shadow: 0 0 10px var(--primary-red);
+            animation: pulse 1.5s infinite; 
+        }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .back-to-live-btn {
+            display: none; color: #cbd5e1; cursor: pointer;
+            padding: 2px 8px; border-radius: 4px; transition: color 0.2s, background 0.2s;
+        }
+        .back-to-live-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+        
+        .custom-player-wrapper.is-timeshift .live-indicator { display: none; }
+        .custom-player-wrapper.is-timeshift .back-to-live-btn { display: flex; }
+        .custom-player-wrapper.is-timeshift .time-display { display: none; }
+
+        /* Right Controls */
+        .controls-right {
+            display: flex; align-items: center;
+            background: var(--control-bg);
+            backdrop-filter: blur(var(--control-blur));
+            -webkit-backdrop-filter: blur(var(--control-blur));
+            border-radius: 999px; padding: 0 5px; height: 40px;
+        }
+        .btn-right {
+            width: 48px; height: 32px; background: transparent;
+            font-size: 0.9rem; font-weight: 600; border-radius: 999px;
+        }
+        .btn-right:hover { background: rgba(255,255,255,0.1); }
+
+        /* Quality Menu */
+        .quality-wrapper { position: relative; height: 100%; display: flex; align-items: center; }
+        .quality-menu {
+            position: absolute; bottom: 50px; right: -20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 5px; min-width: 140px;
+            display: none; flex-direction: column; gap: 2px;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .quality-menu.show { display: flex; animation: slideUp 0.2s ease-out; }
+        @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .quality-item {
+            padding: 8px 12px; border-radius: 6px; cursor: pointer;
+            color: #cbd5e1; font-size: 0.85rem; display: flex; justify-content: space-between;
+        }
+        .quality-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .quality-item.active { color: var(--primary-red); background: rgba(220, 38, 38, 0.1); font-weight: 600; }
+
+        /* Info & List */
+        .program-info-card {
+            background-color: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 0.75rem; padding: 1rem; display: flex; gap: 1rem; align-items: center;
+            width: 100%; max-width: 1280px; margin-top: 1rem;
+        }
+        .channel-logo-img { 
+            width: 80px; min-width: 80px; max-width: 80px; height: auto; 
+            aspect-ratio: 16 / 9; object-fit: contain; background: transparent;
+            border-radius: 8px; padding: 4px; 
+        }
+        .program-title { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 4px; }
+        .program-desc { color: var(--text-muted); font-size: 0.875rem; }
+
+        .group-section { margin-bottom: 2rem; width: 100%; max-width: 1280px; }
+        .group-title { font-size: 1.25rem; font-weight: 700; border-left: 4px solid var(--primary-red); padding-left: 0.75rem; margin-bottom: 1rem; }
+        
+        .channel-list { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding-bottom: 1rem;
+        }
+        @media (min-width: 640px) { .channel-list { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1024px) { .channel-list { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1280px) { .channel-list { grid-template-columns: repeat(5, 1fr); } }
+
+        .channel-card { width: 100%; cursor: pointer; transition: transform 0.2s; }
+        .channel-card:hover { transform: scale(1.03); }
+
+        .card-thumb { 
+            aspect-ratio: 220 / 120; width: 100%;
+            background: url(https://vtvprime.vn/default/placeholderChannel.png);
+            background-size: cover; background-position: center;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+            position: relative; overflow: hidden; 
+        }
+        .card-thumb img { 
+            width: 7vw; min-width: 80px; height: auto; 
+            aspect-ratio: 134 / 50; object-fit: contain; transition: transform 0.3s;
+        }
+        .channel-card:hover .card-thumb img { transform: scale(1.1); }
+        .play-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; z-index: 2; }
+        .channel-card:hover .play-overlay { opacity: 1; }
+        .card-name { text-align: left; margin-top: 8px; font-size: 0.9rem; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .state-container { padding: 2rem; border: 2px dashed #334155; text-align: center; border-radius: 12px; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-content">
+            <a href="#" class="logo">
+                <span class="material-symbols-rounded" style="margin-right:0.5rem; color:var(--primary-red);">live_tv</span>
+                STREAM<span>GO</span>
+            </a>
+            <div class="search-container">
+                <span class="material-symbols-rounded" style="color:#94a3b8; font-size:1.2rem;">search</span>
+                <input type="text" id="search-input" class="search-input" placeholder="Tìm kênh...">
+            </div>
+            <div class="user-avatar">US</div>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <section class="hero-section">
+            
+            <!-- CUSTOM PLAYER AREA -->
+            <div class="player-area">
+                <div class="custom-player-wrapper paused" id="video-wrapper">
+                    <!-- VIDEO TAG: autoplay muted để trình duyệt cho phép tự chạy -->
+                    <video id="custom-video" poster="https://via.placeholder.com/800x450?text=StreamGO" autoplay muted></video>
+                    
+                    <div class="player-loader" id="player-loader">
+                        <span class="material-symbols-rounded spinner">progress_activity</span>
+                    </div>
+
+                    <div class="controls-layer">
+                        
+                        <!-- 1. Progress Bar -->
+                        <div class="progress-container" id="progress-bar">
+                            <div class="progress-fill" id="fill-bar">
+                                <div class="progress-handle"></div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Controls Main -->
+                        <div class="controls-row">
+                            
+                            <!-- Left Controls -->
+                            <div class="controls-left">
+                                <button class="cp-btn btn-play" id="btn-play">
+                                    <span class="material-symbols-rounded">play_arrow</span>
+                                </button>
+                                <div class="volume-container">
+                                    <button class="cp-btn btn-volume" id="btn-mute">
+                                        <span class="material-symbols-rounded">volume_up</span>
+                                    </button>
+                                    <div class="volume-slider-wrap">
+                                        <input type="range" min="0" max="1" step="0.05" value="1" class="volume-slider" id="vol-slider">
+                                    </div>
+                                </div>
+
+                                <!-- Live Control Group -->
+                                <div class="live-control-group">
+                                    <div class="live-indicator" id="live-indicator">
+                                        <div class="live-dot"></div>
+                                        TRỰC TIẾP
+                                    </div>
+                                    <div class="back-to-live-btn" id="back-to-live-btn">
+                                        <span id="timeshift-val">-00:00</span> / TỚI TRỰC TIẾP
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Controls -->
+                            <div class="controls-right">
+                                <div class="quality-wrapper">
+                                    <button class="cp-btn btn-right" id="btn-quality">Auto</button>
+                                    <div class="quality-menu" id="quality-menu"></div>
+                                </div>
+                                <button class="cp-btn btn-right" id="btn-pip" title="Picture in Picture">
+                                    <span class="material-symbols-rounded">branding_watermark</span>
+                                </button>
+                                <button class="cp-btn btn-right" id="btn-fs" title="Toàn màn hình">
+                                    <span class="material-symbols-rounded">fullscreen</span>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="program-info-card">
+                    <img id="logo-display" src="https://via.placeholder.com/150" class="channel-logo-img">
+                    <div style="flex:1">
+                        <h2 class="program-title" id="name-display">Chọn kênh</h2>
+                        <p class="program-desc" id="group-display">Đang tải thông tin...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- List Kênh -->
+        <div id="channel-container" style="width: 100%; max-width: 1280px; min-height:200px; padding: 2rem;">
+            <div class="state-container"><span class="material-symbols-rounded spinner" style="color:red">progress_activity</span></div>
+        </div>
+    </main>
+
+    <script>
+        const DATA_URL = "https://raw.githubusercontent.com/nnam0308/iptv/main/data/data.json";
+        const EPG_URL = "https://raw.githubusercontent.com/iptv380/epg/main/Vietnam/vtv.vn.channels.xml";
+
+        const video = document.getElementById('custom-video');
+        const wrapper = document.getElementById('video-wrapper');
+        const loader = document.getElementById('player-loader');
+        
+        const btnPlay = document.getElementById('btn-play');
+        const btnMute = document.getElementById('btn-mute');
+        const volSlider = document.getElementById('vol-slider');
+        const progressBar = document.getElementById('progress-bar');
+        const fillBar = document.getElementById('fill-bar');
+        
+        const liveIndicator = document.getElementById('live-indicator');
+        const backToLiveBtn = document.getElementById('back-to-live-btn');
+        const timeshiftVal = document.getElementById('timeshift-val');
+        
+        const btnFs = document.getElementById('btn-fs');
+        const btnPip = document.getElementById('btn-pip');
+        const btnQuality = document.getElementById('btn-quality');
+        const qualityMenu = document.getElementById('quality-menu');
+        
+        let hls = null;
+        let globalData = [];
+        let channelMap = {};
+        let currentStreamUrl = ""; 
+        let currentChannelId = ""; 
+        let isUserSeeking = false;
+        let hasUserSeeked = false;
+        let globalEPGData = null; 
+
+        function initHlsPlayer(url) {
+            currentStreamUrl = url;
+            loader.classList.add('active');
+            hasUserSeeked = false; 
+            updateLiveState(true);
+
+            if (Hls.isSupported()) {
+                if (hls) hls.destroy();
+                hls = new Hls({ 
+                    capLevelToPlayerSize: true, autoStartLoad: true,
+                    maxBufferLength: 60, maxMaxBufferLength: 600, enableVOD: true 
+                });
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                    var playPromise = video.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            // Video đang chạy, kiểm tra xem có cần sync UI mute không
+                            syncVolumeUI();
+                        }).catch(error => {
+                            console.log("Autoplay prevented, trying mute");
+                            // Nếu bị chặn, thử chạy mute
+                            video.muted = true;
+                            video.play().then(() => syncVolumeUI());
+                        });
+                    }
+                    generateQualityMenu(data.levels);
+                    loader.classList.remove('active');
+                });
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+                            case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+                            default: hls.destroy(); break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                    loader.classList.remove('active');
+                    updateLiveState(true);
+                    syncVolumeUI();
+                });
+                btnQuality.style.display = 'none';
+            }
+        }
+
+        // --- VOLUME LOGIC MỚI ---
+        function syncVolumeUI() {
+            if (video.muted) {
+                volSlider.value = 0;
+                btnMute.innerHTML = '<span class="material-symbols-rounded">volume_off</span>';
+            } else {
+                volSlider.value = video.volume;
+                let icon = 'volume_up';
+                if (video.volume < 0.5) icon = 'volume_down';
+                if (video.volume === 0) icon = 'volume_off';
+                btnMute.innerHTML = `<span class="material-symbols-rounded">${icon}</span>`;
+            }
+        }
+
+        // Lắng nghe thay đổi volume để update UI
+        video.addEventListener('volumechange', syncVolumeUI);
+
+        volSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            video.volume = val;
+            if (val > 0) video.muted = false; // Kéo slider lên thì tự bật tiếng
+        });
+
+        btnMute.addEventListener('click', () => {
+            if (video.muted) {
+                video.muted = false;
+                if (video.volume === 0) video.volume = 1; // Nếu đang volume 0 thì bật lên max
+            } else {
+                video.muted = true;
+            }
+        });
+
+        // --- CORE LOGIC: LIVE STATE ---
+        function updateLiveState(isLive) {
+            if (isLive) {
+                wrapper.classList.remove('is-timeshift');
+                fillBar.style.width = "100%";
+                hasUserSeeked = false;
+            } else {
+                wrapper.classList.add('is-timeshift');
+            }
+        }
+
+        function jumpToLive() {
+            if (hls && currentStreamUrl) {
+                hls.loadSource(currentStreamUrl);
+                hls.attachMedia(video);
+                video.play();
+            } else if (currentStreamUrl) {
+                video.src = currentStreamUrl;
+                video.play();
+            } else {
+                video.play();
+            }
+            updateLiveState(true);
+        }
+
+        backToLiveBtn.addEventListener('click', jumpToLive);
+
+        video.addEventListener('timeupdate', () => {
+            if (isUserSeeking) return;
+            const seekable = video.seekable;
+            if (seekable.length === 0) return;
+
+            const startTime = seekable.start(0);
+            const endTime = seekable.end(seekable.length - 1);
+            const currentTime = video.currentTime;
+            const latency = endTime - currentTime;
+            
+            let isLive = !hasUserSeeked || (latency < 10);
+            if (isLive && hasUserSeeked) hasUserSeeked = false;
+
+            updateLiveState(isLive);
+
+            if (!isLive) {
+                timeshiftVal.innerText = formatNegativeTime(latency);
+                const windowDuration = endTime - startTime;
+                const positionInWindow = currentTime - startTime;
+                const pct = (positionInWindow / windowDuration) * 100;
+                fillBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+            }
+        });
+
+        function formatNegativeTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            let timeStr = `-${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (h > 0) timeStr = `-${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            return timeStr;
+        }
+
+        function handleSeek(e) {
+            const seekable = video.seekable;
+            if (seekable.length === 0) return;
+            const rect = progressBar.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width; 
+            const startTime = seekable.start(0);
+            const endTime = seekable.end(seekable.length - 1);
+            const windowDuration = endTime - startTime;
+            let targetTime = startTime + (pos * windowDuration);
+
+            if (pos > 0.98) { jumpToLive(); return; }
+
+            hasUserSeeked = true;
+            updateLiveState(false);
+            video.currentTime = targetTime;
+        }
+
+        progressBar.addEventListener('click', handleSeek);
+
+        function togglePlay() {
+            if (video.paused) {
+                if (!hasUserSeeked) jumpToLive();
+                else video.play();
+            } else {
+                video.pause();
+            }
+        }
+        btnPlay.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
+
+        video.addEventListener('play', () => {
+            wrapper.classList.remove('paused');
+            btnPlay.innerHTML = '<span class="material-symbols-rounded filled">pause</span>';
+        });
+        video.addEventListener('pause', () => {
+            wrapper.classList.add('paused');
+            btnPlay.innerHTML = '<span class="material-symbols-rounded filled">play_arrow</span>';
+        });
+
+        btnFs.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                wrapper.requestFullscreen();
+                wrapper.classList.add('fullscreen');
+                btnFs.querySelector('span').innerHTML = 'close_fullscreen';
+                btnFs.querySelector('span').classList.add('filled');
+            } else {
+                document.exitFullscreen();
+                wrapper.classList.remove('fullscreen');
+                btnFs.querySelector('span').innerHTML = 'fullscreen';
+                btnFs.querySelector('span').classList.remove('filled');
+            }
+        });
+
+        btnPip.addEventListener('click', async () => {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+                btnPip.querySelector('span').classList.remove('filled');
+            } else if (document.pictureInPictureEnabled) {
+                await video.requestPictureInPicture();
+                btnPip.querySelector('span').classList.add('filled');
+            }
+        });
+        
+        video.addEventListener('enterpictureinpicture', () => { btnPip.querySelector('span').classList.add('filled'); });
+        video.addEventListener('leavepictureinpicture', () => { btnPip.querySelector('span').classList.remove('filled'); });
+
+        function generateQualityMenu(levels) {
+            qualityMenu.innerHTML = '';
+            const autoItem = document.createElement('div');
+            autoItem.className = 'quality-item active';
+            autoItem.innerHTML = 'Auto';
+            autoItem.onclick = () => {
+                hls.currentLevel = -1;
+                btnQuality.innerText = 'Auto';
+                setActiveQuality(autoItem);
+            };
+            qualityMenu.appendChild(autoItem);
+            levels.forEach((level, index) => {
+                const item = document.createElement('div');
+                item.className = 'quality-item';
+                item.innerHTML = `${level.height}p`; 
+                item.onclick = () => {
+                    hls.currentLevel = index;
+                    btnQuality.innerText = `${level.height}p`;
+                    setActiveQuality(item);
+                };
+                qualityMenu.appendChild(item);
+            });
+        }
+
+        function setActiveQuality(activeEl) {
+            const items = qualityMenu.querySelectorAll('.quality-item');
+            items.forEach(i => i.classList.remove('active'));
+            activeEl.classList.add('active');
+            qualityMenu.classList.remove('show');
+        }
+
+        btnQuality.addEventListener('click', (e) => { e.stopPropagation(); qualityMenu.classList.toggle('show'); });
+        document.addEventListener('click', (e) => {
+            if (!btnQuality.contains(e.target) && !qualityMenu.contains(e.target)) {
+                qualityMenu.classList.remove('show');
+            }
+        });
+
+        // --- EPG FUNCTIONS (REAL XML PARSING) ---
+        
+        async function fetchEPGData() {
+            if (globalEPGData) return globalEPGData; 
+            try {
+                const res = await fetch(EPG_URL);
+                if (!res.ok) throw new Error("Network response was not ok");
+                const text = await res.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, "text/xml");
+                globalEPGData = xmlDoc;
+                return xmlDoc;
+            } catch (e) {
+                console.error("EPG Fetch Error", e);
+                return null;
+            }
+        }
+
+        function parseEPGTime(timeStr) {
+            if (!timeStr || timeStr.length < 12) return "";
+            const h = timeStr.substring(8, 10);
+            const m = timeStr.substring(10, 12);
+            return `${h}:${m}`;
+        }
+        
+        async function renderEPG() {
+            if (!currentChannelId) return;
+            const xmlDoc = await fetchEPGData();
+            if (!xmlDoc) return;
+
+            const programmes = xmlDoc.getElementsByTagName("programme");
+            const now = new Date();
+            const targetId = currentChannelId.toLowerCase().replace('.', '');
+            let currentProgramName = "Đang cập nhật...";
+
+            for (let i = 0; i < programmes.length; i++) {
+                const prog = programmes[i];
+                const channelAttr = prog.getAttribute("channel");
+                
+                if (channelAttr && channelAttr.toLowerCase().replace('.', '').includes(targetId)) {
+                    const startStr = prog.getAttribute("start"); 
+                    const stopStr = prog.getAttribute("stop");
+                    const titleTag = prog.getElementsByTagName("title")[0];
+                    const title = titleTag ? titleTag.textContent : "Chương trình không tên";
+                    
+                    const y = parseInt(startStr.substring(0,4));
+                    const mo = parseInt(startStr.substring(4,6)) - 1;
+                    const d = parseInt(startStr.substring(6,8));
+                    const h = parseInt(startStr.substring(8,10));
+                    const mi = parseInt(startStr.substring(10,12));
+                    const progTime = new Date(y, mo, d, h, mi);
+                    
+                    const y2 = parseInt(stopStr.substring(0,4));
+                    const mo2 = parseInt(stopStr.substring(4,6)) - 1;
+                    const d2 = parseInt(stopStr.substring(6,8));
+                    const h2 = parseInt(stopStr.substring(8,10));
+                    const mi2 = parseInt(stopStr.substring(10,12));
+                    const progEndTime = new Date(y2, mo2, d2, h2, mi2);
+
+                    const diffHours = (progTime - now) / 36e5;
+                    if (diffHours > -12 && diffHours < 12) {
+                        if (now >= progTime && now < progEndTime) {
+                            currentProgramName = title;
+                        }
+                    }
+                }
+            }
+            document.getElementById('group-display').innerText = `Đang phát: ${currentProgramName}`;
+        }
+
+        async function loadApp() {
+            try {
+                const res = await fetch(DATA_URL);
+                let txt = await res.text();
+                // Fix JSON Syntax Error (Missing array brackets and comma issue in 'group')
+                // 1. Fix "VTV" "Kênh" -> "VTV, Kênh" (replace quote-space-quote with quote-comma-space-quote)
+                txt = txt.replace(/"\s+"(?=[^:]+$)/g, ', '); 
+                // 2. Wrap in array if multiple objects
+                let data;
+                try {
+                    data = JSON.parse(txt);
+                } catch(e) {
+                    // Fallback fix: Wrap in [] and add commas between objects
+                    let f = txt.replace(/}(\s*){/g, '},$1{');
+                    if(!f.startsWith('[')) f = `[${f}]`;
+                    // Double check quote fix again just in case
+                    f = f.replace(/"\s+"(?=[^:]+$)/g, ', '); 
+                    data = JSON.parse(f);
+                }
+
+                if (!Array.isArray(data)) data = [data];
+                globalData = data;
+                
+                data.forEach(c => {
+                    if(!c.id) c.id = Math.random().toString(36).substr(2,5);
+                    channelMap[c.id] = c;
+                });
+
+                renderChannels(globalData);
+                if(data.length) playChannel(data[0].id);
+                fetchEPGData();
+
+            } catch (e) {
+                document.getElementById('channel-container').innerHTML = `<div class="state-container" style="border-color:red; color:red">Lỗi tải dữ liệu.</div>`;
+                console.error(e);
+            }
+        }
+
+        function renderChannels(data) {
+            const cont = document.getElementById('channel-container');
+            if(!data.length) { cont.innerHTML = '<div style="padding:2rem;text-align:center">Không tìm thấy kênh</div>'; return; }
+            cont.innerHTML = '';
+
+            const groups = {};
+            data.forEach(ch => {
+                let gs = typeof ch.group === 'string' ? ch.group.split(/[;,]/) : ch.group || ['Khác'];
+                if(!Array.isArray(gs)) gs = [gs];
+                gs.forEach(g => {
+                    let gn = g.trim() || 'Khác';
+                    if(!groups[gn]) groups[gn] = [];
+                    groups[gn].push(ch);
+                });
+            });
+
+            for (const [name, list] of Object.entries(groups)) {
+                const sec = document.createElement('div');
+                sec.className = 'group-section';
+                const sid = 's-' + Math.random().toString(36).substr(2,5);
+                
+                sec.innerHTML = `
+                    <div class="group-title">${name} <span style="font-size:0.8rem; font-weight:normal; color:#64748b; margin-left:5px">(${list.length})</span></div>
+                    <div class="channel-list" id="${sid}">
+                        ${list.map(ch => `
+                            <div class="channel-card" onclick="playChannel('${ch.id}')">
+                                <div class="card-thumb">
+                                    <img src="${ch.image?.url || ''}" onerror="this.src='https://via.placeholder.com/230x130?text=No+Image'">
+                                    <div class="play-overlay"><span class="material-symbols-rounded" style="color:white; font-size:2rem">play_circle</span></div>
+                                </div>
+                                <div class="card-name">${ch.name}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                cont.appendChild(sec);
+            }
+        }
+
+        function playChannel(id) {
+            const ch = channelMap[id];
+            if(!ch) return;
+            currentChannelId = ch.id;
+            document.getElementById('logo-display').src = ch.image?.url || '';
+            document.getElementById('name-display').innerText = ch.name;
+            renderEPG(); 
+            
+            // Set Watermark
+            // Removed as requested
+
+            if(window.innerWidth < 768) window.scrollTo(0,0);
+            initHlsPlayer(ch.stream_links.url);
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e)=>{
+            const k = e.target.value.toLowerCase();
+            const res = globalData.filter(c => 
+                c.name.toLowerCase().includes(k) || (c.group && c.group.toString().toLowerCase().includes(k))
+            );
+            renderChannels(res);
+        });
+
+        loadApp();
+
+    </script>
+</body>
+</html>

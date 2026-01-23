@@ -84,6 +84,40 @@
       "default": true
     }
   },
+    {
+    "id": "vtv5-tay-nam-bo",
+    "name": "VTV5 Tây Nam Bộ",
+    "group": "VTV",
+    "image": {
+      "display": "cover",
+      "shape": "square",
+      "url": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv5-tay-nam-bo.png",
+      "height": 101,
+      "width": 155
+    },
+    "stream_links": {
+      "url": "https://live.fptplay53.net/fnxhd1/vtv5tnb_vhls.smil/chunklist.m3u8",
+      "type": "hls",
+      "default": true
+    }
+  },
+  {
+    "id": "vtv-tay-nguyen",
+    "name": "VTV5 Tây Nguyên",
+    "group": "VTV",
+    "image": {
+      "display": "cover",
+      "shape": "square",
+      "url": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv5-tay-nguyen.png",
+      "height": 101,
+      "width": 155
+    },
+    "stream_links": {
+      "url": "https://live.fptplay53.net/fnxhd1/vtv5taynguyen_vhls.smil/chunklist.m3u8",
+      "type": "hls",
+      "default": true
+    }
+  },
   {
     "id": "vtv6",
     "name": "VTV Cần Thơ",

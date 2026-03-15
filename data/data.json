@@ -1,65 +1,77 @@
+"url-epg": "https://vnepg.site/api/schedule/"
 {
   "VTV": [
     {
+      "id": "vtv1hd",
       "name": "VTV1",
-      "subgroup": "Kênh thiết yếu",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv1.png",
       "link": "https://live.fptplay53.net/fnxch2/vtv1hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv2hd",
       "name": "VTV2",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv2.png",
       "link": "https://live.fptplay53.net/fnxch2/vtv2hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv3hd",
       "name": "VTV3",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv3.png",
       "link": "https://live.fptplay53.net/fnxch2/vtv3hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv4hd",
       "name": "VTV4",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv4.png",
       "link": "https://live.fptplay53.net/fnxch2/vtv4hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv5hd",
       "name": "VTV5",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv5.png",
       "link": "https://live.fptplay53.net/epzch2/vtv5hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv5hdtnb",
       "name": "VTV5 Tây Nam Bộ",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv5-tay-nam-bo.png",
       "link": "https://live.fptplay53.net/fnxhd1/vtv5tnb_vhls.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv5hdtn",
       "name": "VTV5 Tây Nguyên",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv5-tay-nguyen.png",
       "link": "https://live.fptplay53.net/fnxhd1/vtv5taynguyen_vhls.smil/chunklist.m3u8"
     },
     {
+      "id": "vtvcantho",
       "name": "VTV Cần Thơ",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv-can-tho.png",
       "link": "https://live.fptplay53.net/fnxch2/vtvcantho_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv7hd",
       "name": "VTV7",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv7.png",
       "link": "https://live.fptplay53.net/fnxhd1/vtv7hd_vhls.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv8hd",
       "name": "VTV8",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv8.png",
       "link": "https://live.fptplay53.net/epzhd1/vtv8hd_vhls.smil/chunklist.m3u8"
     },
     {
+      "id": "vtv9hd",
       "name": "VTV9",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vtv9.png",
       "link": "https://live.fptplay53.net/epzch2/vtv9hd_abr.smil/chunklist.m3u8"
     },
     {
+      "id": "vietnamtoday",
       "name": "Vietnam Today",
       "logo": "https://raw.githubusercontent.com/nnam0308/iptv/main/logo/vietnam-today.png",
-      "link": "http://hoatv001.ddns.net/iptv/admin.php?stream=ad13aed445fb6f76c2af3003c36b312b&token=5a2c7e9b05fe55eb2b774a998927d434"
+      "link": "https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist.m3u8"
     }
   ]
 }

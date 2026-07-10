@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M3U8 Creator - Neural Expressive</title>
+    <title>M3U8 Creator - IPTV Live Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
     <style>
         :root {
             --bg-main: #0a0f1d;
@@ -75,13 +78,14 @@
             border-radius: 30px;
             color: var(--neural-cyan);
             font-family: monospace;
-            font-size: 0.95rem;
-            min-width: 300px;
+            font-size: 0.85rem;
+            min-width: 420px;
             text-align: center;
             transition: all 0.4s ease;
             opacity: 0;
             transform: translateY(-10px);
             box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
+            word-break: break-all;
         }
 
         .stream-link-box.active {
@@ -195,7 +199,6 @@
             box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
         }
 
-        /* Custom File Upload Button */
         input[type="file"]::file-selector-button {
             background: rgba(0, 240, 255, 0.1);
             color: var(--neon-blue);
@@ -212,14 +215,13 @@
             color: black;
         }
 
-        /* Grid Layout cho Chọn vị trí */
         .position-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
 
-        /* --- PREVIEW MONITOR (Mô phỏng Luồng Phát) --- */
+        /* --- PREVIEW MONITOR --- */
         .preview-monitor {
             margin-top: 20px;
             width: 100%;
@@ -232,7 +234,17 @@
             box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
         }
 
+        .preview-monitor video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
         .preview-video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             display: flex;
@@ -243,6 +255,8 @@
             font-size: 0.9rem;
             text-align: center;
             padding: 20px;
+            z-index: 2;
+            background: #000;
         }
 
         .preview-video-placeholder i {
@@ -251,7 +265,7 @@
             color: rgba(0, 240, 255, 0.3);
         }
 
-        /* Các thành phần lớp phủ Live (Overlay) */
+        /* Overlays */
         .overlay-logo {
             position: absolute;
             max-width: 60px;
@@ -260,25 +274,25 @@
             display: none;
             z-index: 10;
             pointer-events: none;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
             transition: all 0.3s ease;
         }
 
         .overlay-clock {
             position: absolute;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
             z-index: 10;
             pointer-events: none;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,240,255,0.5);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,240,255,0.4);
             transition: all 0.3s ease;
-            background: rgba(0,0,0,0.4);
-            padding: 4px 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
             border-radius: 6px;
         }
 
-        /* Class định vị động cho Overlay */
+        /* Định vị lớp phủ */
         .pos-top-left { top: 15px; left: 15px; bottom: auto; right: auto; }
         .pos-top-right { top: 15px; right: 15px; bottom: auto; left: auto; }
         .pos-bottom-left { bottom: 15px; left: 15px; top: auto; right: auto; }
@@ -331,25 +345,27 @@
             
             <div class="section-group">
                 <h3><i class="fa-solid fa-file-video"></i> Phương thức 1: Upload Video</h3>
-                <label for="videoUpload">Chọn tệp tin video (mp4, mov, avi, mkv...):</label>
+                <label for="videoUpload">Chọn tệp tin video phát cục bộ:</label>
                 <input type="file" id="videoUpload" accept="video/*">
             </div>
 
             <div class="section-group">
                 <h3><i class="fa-solid fa-satellite-dish"></i> Phương thức 2: Tiếp sóng URL M3U8</h3>
-                <label for="m3u8Url">Nhập link nguồn M3U8 hợp lệ:</label>
-                <input type="text" id="m3u8Url" placeholder="https://example.com/live/stream.m3u8">
+                <label for="m3u8Url">Nhập link nguồn M3U8 cần phát:</label>
+                <input type="text" id="m3u8Url" placeholder="Ví dụ: https://nnam0308.github.io/hls/5shdj3lo3e3s.m3u8">
             </div>
 
-            <label>Màn hình giám sát (Live Preview):</label>
+            <label>Màn hình phát sóng (Live Stream Player):</label>
             <div class="preview-monitor" id="previewMonitor">
                 <img id="overlayLogo" class="overlay-logo pos-top-left" src="" alt="Logo">
                 <div id="overlayClock" class="overlay-clock pos-top-right">00:00</div>
 
+                <video id="mainVideoPlayer" controls autoplay muted playsinline></video>
+
                 <div class="preview-video-placeholder" id="videoPlaceholder">
                     <i class="fa-solid fa-circle-notch fa-spin" id="loadingIcon" style="display:none;"></i>
                     <i class="fa-solid fa-tv" id="tvIcon"></i>
-                    <span id="monitorStatus">Tín hiệu trống - Vui lòng chọn nguồn và bấm Bắt đầu</span>
+                    <span id="monitorStatus">Tín hiệu trống - Vui lòng cấu hình nguồn phát và nhấn Bắt đầu luồng</span>
                 </div>
             </div>
         </div>
@@ -385,12 +401,12 @@
                     </div>
                     <div>
                         <label for="clockFamily">Font-family chữ:</label>
-                        <input type="text" id="clockFamily" value="Orbitron" placeholder="Ví dụ: 'Arial', sans-serif">
+                        <input type="text" id="clockFamily" value="Orbitron" placeholder="Ví dụ: 'Orbitron', sans-serif">
                     </div>
                 </div>
 
-                <label for="clockStyleSheet">Link Stylesheet tùy biến (Google Fonts URL nếu có):</label>
-                <input type="text" id="clockStyleSheet" placeholder="https://fonts.googleapis.com/css2?family=Tên+Font">
+                <label for="clockStyleSheet">Link Stylesheet tùy biến (Google Fonts):</label>
+                <input type="text" id="clockStyleSheet" placeholder="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap">
             </div>
 
             <button class="btn-apply" id="btnApplyCustom">
@@ -401,7 +417,6 @@
     </div>
 
     <script>
-        // DOM Elements
         const btnStartStream = document.getElementById('btnStartStream');
         const streamLinkBox = document.getElementById('streamLinkBox');
         const streamLinkText = document.getElementById('streamLinkText');
@@ -409,6 +424,8 @@
         const videoUpload = document.getElementById('videoUpload');
         const m3u8Url = document.getElementById('m3u8Url');
         
+        const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
         const tvIcon = document.getElementById('tvIcon');
         const loadingIcon = document.getElementById('loadingIcon');
         const monitorStatus = document.getElementById('monitorStatus');
@@ -423,7 +440,8 @@
         const overlayClock = document.getElementById('overlayClock');
         const btnApplyCustom = document.getElementById('btnApplyCustom');
 
-        // Khởi động cập nhật đồng hồ chạy thực tế (Giả lập thời gian thực trên luồng)
+        let currentHlsInstance = null;
+
         function updateLiveClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -433,45 +451,87 @@
         setInterval(updateLiveClock, 1000);
         updateLiveClock();
 
-        // Xử lý sự kiện: Bắt đầu luồng stream
         btnStartStream.addEventListener('click', () => {
-            let streamSource = "";
-            
+            let streamSourceType = ""; 
+            let finalUrl = "";
+
             if (videoUpload.files.length > 0) {
-                streamSource = `Tệp cục bộ: ${videoUpload.files[0].name}`;
+                streamSourceType = "file";
+                finalUrl = URL.createObjectURL(videoUpload.files[0]);
             } else if (m3u8Url.value.trim() !== "") {
-                streamSource = m3u8Url.value.trim();
+                streamSourceType = "url";
+                finalUrl = m3u8Url.value.trim();
             } else {
-                alert("Vui lòng tải video lên hoặc nhập link URL tiếp sóng trước khi bắt đầu!");
+                alert("Vui lòng tải video lên hoặc điền đường link stream (.m3u8)!");
                 return;
             }
 
-            // Tạo mã hash ngẫu nhiên cho link stream m3u8
-            const randomCode = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6);
-            const currentDomain = window.location.origin === "null" ? "https://neural-stream.io" : window.location.origin;
-            const generatedM3u8 = `${currentDomain}/hls/${randomCode}.m3u8`;
+            // XỬ LÝ GHÉP ĐƯỜNG DẪN ĐÚNG CẤU TRÚC REPOSITORY
+            let baseDomain = window.location.origin;
+            
+            // Nếu chạy local (file://) hoặc không nhận dạng được origin, gán domain tĩnh của bạn làm mẫu
+            if (baseDomain === "null" || baseDomain.includes("file://")) {
+                baseDomain = "https://nnam0308.github.io/iptv";
+            } else {
+                // Nếu chạy trên GitHub Pages thật, tự động kiểm tra xem path đã có /iptv chưa, nếu chưa thì thêm vào
+                if (!window.location.pathname.startsWith('/iptv') && baseDomain.includes("github.io")) {
+                    baseDomain = baseDomain + "/iptv";
+                } else if (window.location.pathname.startsWith('/iptv')) {
+                    baseDomain = baseDomain + "/iptv";
+                }
+            }
 
-            // Hiển thị hiệu ứng loading nhẹ trên màn hình monitor
+            // Sinh mã code random dạng số (ví dụ: 12345678)
+            const randomCode = Math.floor(10000000 + Math.random() * 90000000);
+            
+            // Kết quả link hoàn chỉnh: https://nnam0308.github.io/iptv/hls/12345678.m3u8
+            const generatedM3u8 = `${baseDomain}/hls/${randomCode}.m3u8`;
+
+            videoPlaceholder.style.display = 'flex';
             tvIcon.style.display = 'none';
             loadingIcon.style.display = 'block';
-            monitorStatus.textContent = "Đang mã hóa luồng tín hiệu...";
+            monitorStatus.textContent = "Đang kết nối & giải mã luồng phát...";
+
+            if (currentHlsInstance) {
+                currentHlsInstance.destroy();
+                currentHlsInstance = null;
+            }
 
             setTimeout(() => {
-                loadingIcon.style.display = 'none';
-                tvIcon.style.display = 'block';
-                tvIcon.className = "fa-solid fa-signal";
-                tvIcon.style.color = "var(--neural-cyan)";
-                monitorStatus.textContent = `Đang phát trực tuyến luồng của bạn.`;
-                
-                // Cập nhật link luồng ở giữa header
+                videoPlaceholder.style.display = 'none';
+                mainVideoPlayer.style.display = 'block';
+
+                if (streamSourceType === "file") {
+                    mainVideoPlayer.src = finalUrl;
+                    mainVideoPlayer.play().catch(e => console.log(e));
+                } else {
+                    if (Hls.isSupported()) {
+                        currentHlsInstance = new Hls();
+                        currentHlsInstance.loadSource(finalUrl);
+                        currentHlsInstance.attachMedia(mainVideoPlayer);
+                        currentHlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+                            mainVideoPlayer.play().catch(e => console.log(e));
+                        });
+                        currentHlsInstance.on(Hls.Events.ERROR, function (event, data) {
+                            if (data.fatal) {
+                                alert("Không thể giải mã luồng M3U8 này. Hãy chắc chắn link hoạt động hoặc không bị chặn CORS.");
+                            }
+                        });
+                    } else if (mainVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                        mainVideoPlayer.src = finalUrl;
+                        mainVideoPlayer.addEventListener('loadedmetadata', function() {
+                            mainVideoPlayer.play();
+                        });
+                    }
+                }
+
+                // Cập nhật lên Header đoạn text theo cấu trúc mới
                 streamLinkText.textContent = generatedM3u8;
                 streamLinkBox.classList.add('active');
-            }, 1200);
+            }, 1000);
         });
 
-        // Xử lý sự kiện: Áp dụng cá nhân hóa (Logo & Đồng hồ)
         btnApplyCustom.addEventListener('click', () => {
-            // 1. Cập nhật Logo
             if (logoUpload.files && logoUpload.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -480,14 +540,9 @@
                 }
                 reader.readAsDataURL(logoUpload.files[0]);
             }
-
-            // Cập nhật Vị trí Logo
             overlayLogo.className = `overlay-logo ${logoPosition.value}`;
-
-            // 2. Cập nhật Vị trí Đồng hồ
             overlayClock.className = `overlay-clock ${clockPosition.value}`;
 
-            // 3. Tải Font tùy biến (nếu có link stylesheet)
             if (clockStyleSheet.value.trim() !== "") {
                 const linkId = "dynamic-clock-font";
                 let oldLink = document.getElementById(linkId);
@@ -500,12 +555,10 @@
                 document.head.appendChild(newLink);
             }
 
-            // Thay đổi font-family của đồng hồ hiển thị
             if (clockFamily.value.trim() !== "") {
                 overlayClock.style.fontFamily = clockFamily.value;
             }
-
-            alert("Đã đồng bộ hóa thiết lập cá nhân hóa lên luồng phát!");
+            alert("Đã áp dụng toàn bộ cài đặt đồ họa tùy chỉnh lên màn hình Live Stream!");
         });
     </script>
 </body>

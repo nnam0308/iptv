@@ -6,7 +6,6 @@
     <title>M3U8 Creator - IPTV Live Edition</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <style>
@@ -21,305 +20,97 @@
             --shadow-neural: 0 8px 32px 0 rgba(0, 240, 255, 0.1);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body {
             background: radial-gradient(circle at 50% 50%, #102542 0%, var(--bg-main) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
+            color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
         }
 
-        /* --- HEADER --- */
         header {
-            background: rgba(6, 11, 25, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 2px solid var(--border-glow);
-            padding: 15px 30px;
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            align-items: center;
-            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: rgba(6, 11, 25, 0.85); backdrop-filter: blur(12px); border-bottom: 2px solid var(--border-glow);
+            padding: 15px 30px; display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15); position: sticky; top: 0; z-index: 100;
         }
 
         .header-left .title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--neon-blue);
-            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 1.4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); display: flex; align-items: center; gap: 10px;
         }
 
-        .header-center {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-
+        .header-center { display: flex; justify-content: center; align-items: center; width: 100%; }
         .stream-link-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px dashed var(--neon-blue);
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: var(--neural-cyan);
-            font-family: monospace;
-            font-size: 0.85rem;
-            min-width: 450px;
-            max-width: 650px;
-            text-align: center;
-            transition: all 0.4s ease;
-            opacity: 0;
-            transform: translateY(-10px);
-            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
-            word-break: break-all;
-            user-select: all;
+            background: rgba(0, 0, 0, 0.4); border: 1px dashed var(--neon-blue); padding: 10px 20px; border-radius: 30px;
+            color: var(--neural-cyan); font-family: monospace; font-size: 0.85rem; min-width: 450px; max-width: 650px;
+            text-align: center; transition: all 0.4s ease; opacity: 0; transform: translateY(-10px);
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1); word-break: break-all; user-select: all;
         }
+        .stream-link-box.active { opacity: 1; transform: translateY(0); }
 
-        .stream-link-box.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .header-right {
-            display: flex;
-            justify-content: flex-end;
-        }
-
+        .header-right { display: flex; justify-content: flex-end; }
         .btn-neural {
-            background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
-            background-size: 200% auto;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(67, 100, 247, 0.4);
-            transition: 0.4s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc); background-size: 200% auto;
+            color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer;
+            font-weight: bold; letter-spacing: 1px; box-shadow: 0 0 15px rgba(67, 100, 247, 0.4);
+            transition: 0.4s; display: flex; align-items: center; gap: 8px;
         }
+        .btn-neural:hover { background-position: right center; box-shadow: 0 0 25px var(--neon-blue); transform: scale(1.02); }
 
-        .btn-neural:hover {
-            background-position: right center;
-            box-shadow: 0 0 25px var(--neon-blue);
-            transform: scale(1.02);
-        }
-
-        /* --- MAIN CONTAINER --- */
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px;
-            flex: 1;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 30px; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; }
         .card {
-            background: var(--bg-card);
-            border-radius: 24px;
-            border: 1px solid rgba(0, 240, 255, 0.1);
-            padding: 30px;
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow-neural);
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            background: var(--bg-card); border-radius: 24px; border: 1px solid rgba(0, 240, 255, 0.1);
+            padding: 30px; backdrop-filter: blur(20px); box-shadow: var(--shadow-neural); transition: transform 0.3s ease, border-color 0.3s ease;
         }
+        .card:hover { border-color: rgba(0, 240, 255, 0.3); }
 
-        .card:hover {
-            border-color: rgba(0, 240, 255, 0.3);
-        }
+        h2 { font-size: 1.25rem; margin-bottom: 25px; color: var(--neon-blue); border-left: 4px solid var(--neural-cyan); padding-left: 10px; text-transform: uppercase; }
+        .section-group { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        h3 { font-size: 1rem; margin-bottom: 15px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
 
-        h2 {
-            font-size: 1.25rem;
-            margin-bottom: 25px;
-            color: var(--neon-blue);
-            border-left: 4px solid var(--neural-cyan);
-            padding-left: 10px;
-            text-transform: uppercase;
-        }
-
-        .section-group {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-        }
-
-        h3 {
-            font-size: 1rem;
-            margin-bottom: 15px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* --- CONTROL ELEMENT STYLES --- */
-        label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            margin-top: 12px;
-        }
-
+        label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; margin-top: 12px; }
         input[type="text"], input[type="file"], select {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            padding: 12px 16px;
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9rem;
-            outline: none;
-            transition: 0.3s;
+            width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 12px 16px; border-radius: 8px; color: white; font-size: 0.9rem; outline: none; transition: 0.3s;
         }
-
-        input[type="text"]:focus, select:focus {
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-        }
-
+        input[type="text"]:focus, select:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 240, 255, 0.2); }
         input[type="file"]::file-selector-button {
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--neon-blue);
-            border: 1px solid var(--neon-blue);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-right: 10px;
-            transition: 0.3s;
+            background: rgba(0, 240, 255, 0.1); color: var(--neon-blue); border: 1px solid var(--neon-blue);
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 10px; transition: 0.3s;
         }
+        input[type="file"]::file-selector-button:hover { background: var(--neon-blue); color: black; }
 
-        input[type="file"]::file-selector-button:hover {
-            background: var(--neon-blue);
-            color: black;
-        }
+        .position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-        .position-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        /* --- PREVIEW MONITOR --- */
+        /* --- MONITOR LAYOUT --- */
         .preview-monitor {
-            margin-top: 20px;
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: #000;
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            margin-top: 20px; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px;
+            position: relative; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
         }
-
-        .preview-monitor video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: none;
+        .preview-monitor video, .preview-monitor iframe {
+            width: 100%; height: 100%; border: none; display: none;
         }
-
         .preview-video-placeholder {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-align: center;
-            padding: 20px;
-            z-index: 2;
-            background: #000;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 20px; z-index: 2; background: #000;
         }
-
-        .preview-video-placeholder i {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            color: rgba(0, 240, 255, 0.3);
-        }
+        .preview-video-placeholder i { font-size: 3rem; margin-bottom: 10px; color: rgba(0, 240, 255, 0.3); }
 
         /* Overlays */
-        .overlay-logo {
-            position: absolute;
-            max-width: 60px;
-            max-height: 60px;
-            object-fit: contain;
-            display: none;
-            z-index: 10;
-            pointer-events: none;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-            transition: all 0.3s ease;
-        }
-
+        .overlay-logo { position: absolute; max-width: 60px; max-height: 60px; object-fit: contain; display: none; z-index: 10; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); transition: all 0.3s ease; }
         .overlay-clock {
-            position: absolute;
-            color: white;
-            font-size: 1.4rem;
-            font-weight: bold;
-            z-index: 10;
-            pointer-events: none;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,240,255,0.4);
-            transition: all 0.3s ease;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 12px;
-            border-radius: 6px;
+            position: absolute; color: white; font-size: 1.4rem; font-weight: bold; z-index: 10; pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,240,255,0.4); transition: all 0.3s ease; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 6px;
         }
 
-        /* Định vị lớp phủ */
         .pos-top-left { top: 15px; left: 15px; bottom: auto; right: auto; }
         .pos-top-right { top: 15px; right: 15px; bottom: auto; left: auto; }
         .pos-bottom-left { bottom: 15px; left: 15px; top: auto; right: auto; }
         .pos-bottom-right { bottom: 15px; right: 15px; top: auto; left: auto; }
 
         .btn-apply {
-            background: linear-gradient(135deg, #00ea91, #00bfa5);
-            color: #050b14;
-            font-weight: 700;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0, 234, 145, 0.3);
-            margin-top: 10px;
-            transition: 0.3s;
+            background: linear-gradient(135deg, #00ea91, #00bfa5); color: #050b14; font-weight: 700; border: none;
+            width: 100%; padding: 14px; border-radius: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(0, 234, 145, 0.3); margin-top: 10px; transition: 0.3s;
         }
-
-        .btn-apply:hover {
-            box-shadow: 0 0 25px var(--neural-cyan);
-            transform: translateY(-2px);
-        }
+        .btn-apply:hover { box-shadow: 0 0 25px var(--neural-cyan); transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -341,20 +132,25 @@
     </header>
 
     <div class="container">
-        
         <div class="card">
             <h2><i class="fa-solid fa-sliders"></i> Cấu hình nguồn phát</h2>
             
             <div class="section-group">
                 <h3><i class="fa-solid fa-file-video"></i> Phương thức 1: Upload Video</h3>
-                <label for="videoUpload">Chọn tệp tin video phát cục bộ:</label>
+                <label for="videoUpload">Chọn tệp tin video phát cục bộ (Chỉ một mình bạn xem được):</label>
                 <input type="file" id="videoUpload" accept="video/*">
             </div>
 
             <div class="section-group">
                 <h3><i class="fa-solid fa-satellite-dish"></i> Phương thức 2: Tiếp sóng URL M3U8</h3>
-                <label for="m3u8Url">Nhập link nguồn M3U8 cần phát:</label>
-                <input type="text" id="m3u8Url" placeholder="Ví dụ: https://nnam0308.github.io/hls/5shdj3lo3e3s.m3u8">
+                <label for="m3u8Url">Nhập link nguồn M3U8 trực tuyến:</label>
+                <input type="text" id="m3u8Url" placeholder="Ví dụ: https://live.nosdn.127.net/profm/live.m3u8">
+            </div>
+
+            <div class="section-group">
+                <h3><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Phương thức 3: Video YouTube</h3>
+                <label for="youtubeUrl">Nhập đường link video YouTube:</label>
+                <input type="text" id="youtubeUrl" placeholder="Ví dụ: https://www.youtube.com/watch?v=dQw4w9WgXcQ">
             </div>
 
             <label>Màn hình phát sóng (Live Stream Player):</label>
@@ -363,6 +159,7 @@
                 <div id="overlayClock" class="overlay-clock pos-top-right">00:00</div>
 
                 <video id="mainVideoPlayer" controls autoplay muted playsinline></video>
+                <iframe id="youtubePlayer" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
                 <div class="preview-video-placeholder" id="videoPlaceholder">
                     <i class="fa-solid fa-circle-notch fa-spin" id="loadingIcon" style="display:none;"></i>
@@ -374,12 +171,10 @@
 
         <div class="card">
             <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Cá nhân hóa luồng stream</h2>
-            
             <div class="section-group">
                 <h3><i class="fa-solid fa-image"></i> Logo Luồng</h3>
                 <label for="logoUpload">Tải ảnh Logo lên:</label>
                 <input type="file" id="logoUpload" accept="image/*">
-                
                 <label for="logoPosition">Vị trí hiển thị logo:</label>
                 <select id="logoPosition">
                     <option value="pos-top-left">Góc trên - bên Trái</option>
@@ -403,10 +198,9 @@
                     </div>
                     <div>
                         <label for="clockFamily">Font-family chữ:</label>
-                        <input type="text" id="clockFamily" value="Orbitron" placeholder="Ví dụ: 'Orbitron', sans-serif">
+                        <input type="text" id="clockFamily" value="Orbitron">
                     </div>
                 </div>
-
                 <label for="clockStyleSheet">Link Stylesheet tùy biến (Google Fonts):</label>
                 <input type="text" id="clockStyleSheet" placeholder="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap">
             </div>
@@ -415,7 +209,6 @@
                 <i class="fa-solid fa-check-double"></i> Áp dụng cài đặt cá nhân hóa
             </button>
         </div>
-
     </div>
 
     <script>
@@ -425,8 +218,10 @@
         
         const videoUpload = document.getElementById('videoUpload');
         const m3u8Url = document.getElementById('m3u8Url');
+        const youtubeUrl = document.getElementById('youtubeUrl');
         
         const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+        const youtubePlayer = document.getElementById('youtubePlayer');
         const videoPlaceholder = document.getElementById('videoPlaceholder');
         const tvIcon = document.getElementById('tvIcon');
         const loadingIcon = document.getElementById('loadingIcon');
@@ -446,46 +241,50 @@
 
         function updateLiveClock() {
             const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            overlayClock.textContent = `${hours}:${minutes}`;
+            overlayClock.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
         setInterval(updateLiveClock, 1000);
-        updateLiveClock();
+
+        // Hàm trích xuất ID từ link YouTube bất kỳ
+        function extractYouTubeId(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
 
         btnStartStream.addEventListener('click', () => {
-            let streamSourceType = ""; 
+            let streamType = ""; 
             let finalUrl = "";
 
             if (videoUpload.files.length > 0) {
-                streamSourceType = "file";
+                alert("Lưu ý: Video cục bộ chỉ hỗ trợ xem thử tại đây, không thể chia sẻ ra bên ngoài.");
+                streamType = "file";
                 finalUrl = URL.createObjectURL(videoUpload.files[0]);
             } else if (m3u8Url.value.trim() !== "") {
-                streamSourceType = "url";
+                streamType = "m3u8";
                 finalUrl = m3u8Url.value.trim();
+            } else if (youtubeUrl.value.trim() !== "") {
+                const ytId = extractYouTubeId(youtubeUrl.value.trim());
+                if (!ytId) {
+                    alert("Đường link YouTube không hợp lệ!");
+                    return;
+                }
+                streamType = "youtube";
+                finalUrl = ytId; // Chỉ gửi ID đi cho ngắn gọn gọn link
             } else {
-                alert("Vui lòng tải video lên hoặc điền đường link stream (.m3u8)!");
+                alert("Vui lòng thiết lập 1 trong 3 nguồn phát!");
                 return;
             }
 
-            // ĐỊNH TUYẾN CHUẨN ĐƯỜNG DẪN REPOSITORY CHO GITHUB PAGES
             let origin = window.location.origin;
-            if (origin === "null" || origin.includes("file://")) {
-                origin = "https://nnam0308.github.io";
-            }
+            if (origin === "null" || origin.includes("file://")) { origin = "https://nnam0308.github.io"; }
             
-            // Ép cấu trúc kết thúc luôn có /iptv/hls.html
             const baseEndpoint = `${origin}/iptv/hls.html`;
             const randomCode = Math.floor(10000000 + Math.random() * 90000000);
             
-            // Đồng bộ toàn bộ tham số tùy chỉnh đồ họa vào chuỗi URL Query
-            let queryParams = `?id=${randomCode}&stream=${encodeURIComponent(finalUrl)}`;
-            
-            // Đính kèm cấu hình đồng hồ và logo nếu có
+            let queryParams = `?id=${randomCode}&type=${streamType}&stream=${encodeURIComponent(finalUrl)}`;
             queryParams += `&clkPos=${clockPosition.value}&clkFont=${encodeURIComponent(clockFamily.value)}`;
-            if (clockStyleSheet.value.trim() !== "") {
-                queryParams += `&clkCss=${encodeURIComponent(clockStyleSheet.value.trim())}`;
-            }
+            if (clockStyleSheet.value.trim() !== "") queryParams += `&clkCss=${encodeURIComponent(clockStyleSheet.value.trim())}`;
             queryParams += `&logoPos=${logoPosition.value}`;
 
             const generatedUrl = baseEndpoint + queryParams;
@@ -493,33 +292,28 @@
             videoPlaceholder.style.display = 'flex';
             tvIcon.style.display = 'none';
             loadingIcon.style.display = 'block';
-            monitorStatus.textContent = "Đang đồng bộ cấu hình lớp phủ hệ thần kinh số...";
+            monitorStatus.textContent = "Đang đồng bộ hạ tầng phát kỹ thuật số...";
 
-            if (currentHlsInstance) {
-                currentHlsInstance.destroy();
-                currentHlsInstance = null;
-            }
+            if (currentHlsInstance) { currentHlsInstance.destroy(); currentHlsInstance = null; }
 
             setTimeout(() => {
                 videoPlaceholder.style.display = 'none';
-                mainVideoPlayer.style.display = 'block';
-
-                if (streamSourceType === "file") {
-                    mainVideoPlayer.src = finalUrl;
-                    mainVideoPlayer.play().catch(e => console.log(e));
+                
+                if (streamType === "youtube") {
+                    mainVideoPlayer.style.display = 'none';
+                    youtubePlayer.style.display = 'block';
+                    youtubePlayer.src = `https://www.youtube.com/embed/${finalUrl}?autoplay=1&mute=1`;
                 } else {
-                    if (Hls.isSupported()) {
-                        currentHlsInstance = new Hls();
-                        currentHlsInstance.loadSource(finalUrl);
-                        currentHlsInstance.attachMedia(mainVideoPlayer);
-                        currentHlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-                            mainVideoPlayer.play().catch(e => console.log(e));
-                        });
-                    } else if (mainVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    youtubePlayer.style.display = 'none';
+                    mainVideoPlayer.style.display = 'block';
+                    if (streamType === "file") {
                         mainVideoPlayer.src = finalUrl;
-                        mainVideoPlayer.addEventListener('loadedmetadata', function() {
-                            mainVideoPlayer.play();
-                        });
+                    } else {
+                        if (Hls.isSupported()) {
+                            currentHlsInstance = new Hls();
+                            currentHlsInstance.loadSource(finalUrl);
+                            currentHlsInstance.attachMedia(mainVideoPlayer);
+                        }
                     }
                 }
 
@@ -528,35 +322,21 @@
             }, 800);
         });
 
-        // Áp dụng tạm thời trên màn hình xem trước
         btnApplyCustom.addEventListener('click', () => {
             if (logoUpload.files && logoUpload.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    overlayLogo.src = e.target.result;
-                    overlayLogo.style.display = 'block';
-                }
+                reader.onload = function(e) { overlayLogo.src = e.target.result; overlayLogo.style.display = 'block'; }
                 reader.readAsDataURL(logoUpload.files[0]);
             }
             overlayLogo.className = `overlay-logo ${logoPosition.value}`;
             overlayClock.className = `overlay-clock ${clockPosition.value}`;
-
             if (clockStyleSheet.value.trim() !== "") {
-                const linkId = "dynamic-clock-font";
-                let oldLink = document.getElementById(linkId);
-                if (oldLink) oldLink.remove();
-
                 const newLink = document.createElement('link');
-                newLink.id = linkId;
-                newLink.rel = 'stylesheet';
-                newLink.href = clockStyleSheet.value.trim();
+                newLink.rel = 'stylesheet'; newLink.href = clockStyleSheet.value.trim();
                 document.head.appendChild(newLink);
             }
-
-            if (clockFamily.value.trim() !== "") {
-                overlayClock.style.fontFamily = clockFamily.value;
-            }
-            alert("Đã đồng bộ hóa thiết lập đồ họa cục bộ!");
+            if (clockFamily.value.trim() !== "") overlayClock.style.fontFamily = clockFamily.value;
+            alert("Đã áp dụng cài đặt giao diện!");
         });
     </script>
 </body>

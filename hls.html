@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M3U8 Player - Live Station</title>
+    <title>M3U8 & YouTube Player - Live Station</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         body, html {
@@ -11,45 +11,15 @@
             background-color: #020613; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
         }
+        .player-container { position: relative; width: 100%; height: 100%; background: #000; }
+        video, iframe { width: 100%; height: 100%; border: none; display: none; }
         
-        .player-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 100vw;
-            max-height: 100vh;
-            background: #000;
-        }
-
-        video {
-            width: 100%; height: 100%; object-fit: contain;
-        }
-
-        /* Đồng hồ & Logo Overlays */
         .overlay-clock {
-            position: absolute;
-            color: #fff;
-            font-size: 1.5rem;
-            font-weight: bold;
-            z-index: 10;
-            background: rgba(0,0,0,0.5);
-            padding: 6px 14px;
-            border-radius: 6px;
-            pointer-events: none;
+            position: absolute; color: #fff; font-size: 1.5rem; font-weight: bold; z-index: 10;
+            background: rgba(0,0,0,0.5); padding: 6px 14px; border-radius: 6px; pointer-events: none;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0, 240, 255, 0.4);
         }
 
-        .overlay-logo {
-            position: absolute;
-            max-width: 70px;
-            max-height: 70px;
-            object-fit: contain;
-            z-index: 10;
-            pointer-events: none;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-        }
-
-        /* Các class định vị trí */
         .pos-top-left { top: 20px; left: 20px; }
         .pos-top-right { top: 20px; right: 20px; }
         .pos-bottom-left { bottom: 20px; left: 20px; }
@@ -57,8 +27,7 @@
 
         .error-msg {
             color: #00f0ff; font-family: sans-serif; font-size: 1.2rem; 
-            text-align: center; position: absolute; z-index: 5;
-            text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+            text-align: center; position: absolute; z-index: 5; text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
         }
     </style>
 </head>
@@ -67,70 +36,66 @@
     <div class="player-container">
         <div id="liveClock" class="overlay-clock pos-top-right">00:00</div>
         
-        <video id="videoPlayer" controls autoplay playsinline muted></video>
+        <video id="videoPlayer" controls autoplay playsinline></video>
+        <iframe id="youtubePlayer" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         
         <div id="errorBox" class="error-msg" style="display: none;">
-            <p>⚠️ Không kết nối được luồng phát. Link m3u8 có thể đã hết hạn hoặc chặn CORS.</p>
+            <p>⚠️ Không kết nối được luồng phát. Link m3u8 có thể lỗi hoặc bị chặn CORS.</p>
         </div>
     </div>
 
     <script>
-        // Phân tích tham số mã hóa từ URL
         const urlParams = new URLSearchParams(window.location.search);
-        const streamUrl = urlParams.get('stream');
+        const streamData = urlParams.get('stream');
+        const streamType = urlParams.get('type') || 'm3u8'; // Mặc định nếu không gửi type là m3u8
         const clkPos = urlParams.get('clkPos') || 'pos-top-right';
         const clkFont = urlParams.get('clkFont') || 'Orbitron';
         const clkCss = urlParams.get('clkCss');
         
         const video = document.getElementById('videoPlayer');
+        const youtubePlayer = document.getElementById('youtubePlayer');
         const errorBox = document.getElementById('errorBox');
         const liveClock = document.getElementById('liveClock');
 
-        // 1. Áp dụng cấu hình Đồng hồ cá nhân hóa nhận từ link dữ liệu gốc
+        // Đồng hồ cài đặt từ link dữ liệu
         liveClock.className = `overlay-clock ${clkPos}`;
-        
         if (clkCss) {
             const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = decodeURIComponent(clkCss);
+            link.rel = 'stylesheet'; link.href = decodeURIComponent(clkCss);
             document.head.appendChild(link);
         }
-        if (clkFont) {
-            liveClock.style.fontFamily = decodeURIComponent(clkFont);
-        }
+        if (clkFont) liveClock.style.fontFamily = decodeURIComponent(clkFont);
 
-        // Chạy đồng hồ thời gian thực
         function runClock() {
             const now = new Date();
             liveClock.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
-        setInterval(runClock, 1000);
-        runClock();
+        setInterval(runClock, 1000); runClock();
 
-        // 2. Xử lý giải mã và nạp luồng phát video m3u8
-        if (streamUrl) {
-            const decodedStream = decodeURIComponent(streamUrl);
-            
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(decodedStream);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play().catch(() => {
-                        console.log("Cần click màn hình để gỡ chặn âm thanh phát tự động");
+        // XỬ LÝ PHÂN LUỒNG PHÁT VIDEO TỪ THAM SỐ TYPE
+        if (streamData) {
+            const decodedData = decodeURIComponent(streamData);
+
+            if (streamType === "youtube") {
+                // Nếu nguồn là YouTube: Mở iframe, ẩn video thường
+                video.style.display = 'none';
+                youtubePlayer.style.display = 'block';
+                youtubePlayer.src = `https://www.youtube.com/embed/${decodedData}?autoplay=1`;
+            } else {
+                // Nếu nguồn là M3U8 mạng thường
+                youtubePlayer.style.display = 'none';
+                video.style.display = 'block';
+
+                if (Hls.isSupported()) {
+                    const hls = new Hls();
+                    hls.loadSource(decodedData);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.ERROR, function(event, data) {
+                        if (data.fatal) { video.style.display = 'none'; errorBox.style.display = 'block'; }
                     });
-                });
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        video.style.display = 'none';
-                        errorBox.style.display = 'block';
-                    }
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = decodedStream;
-                video.addEventListener('loadedmetadata', function() {
-                    video.play();
-                });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = decodedData;
+                }
             }
         } else {
             video.style.display = 'none';

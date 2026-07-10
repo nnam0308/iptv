@@ -79,13 +79,15 @@
             color: var(--neural-cyan);
             font-family: monospace;
             font-size: 0.85rem;
-            min-width: 420px;
+            min-width: 450px;
+            max-width: 650px;
             text-align: center;
             transition: all 0.4s ease;
             opacity: 0;
             transform: translateY(-10px);
             box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
             word-break: break-all;
+            user-select: all;
         }
 
         .stream-link-box.active {
@@ -466,31 +468,32 @@
                 return;
             }
 
-            // XỬ LÝ GHÉP ĐƯỜNG DẪN ĐÚNG CẤU TRÚC REPOSITORY
-            let baseDomain = window.location.origin;
-            
-            // Nếu chạy local (file://) hoặc không nhận dạng được origin, gán domain tĩnh của bạn làm mẫu
-            if (baseDomain === "null" || baseDomain.includes("file://")) {
-                baseDomain = "https://nnam0308.github.io/iptv";
-            } else {
-                // Nếu chạy trên GitHub Pages thật, tự động kiểm tra xem path đã có /iptv chưa, nếu chưa thì thêm vào
-                if (!window.location.pathname.startsWith('/iptv') && baseDomain.includes("github.io")) {
-                    baseDomain = baseDomain + "/iptv";
-                } else if (window.location.pathname.startsWith('/iptv')) {
-                    baseDomain = baseDomain + "/iptv";
-                }
+            // ĐỊNH TUYẾN CHUẨN ĐƯỜNG DẪN REPOSITORY CHO GITHUB PAGES
+            let origin = window.location.origin;
+            if (origin === "null" || origin.includes("file://")) {
+                origin = "https://nnam0308.github.io";
             }
-
-            // Sinh mã code random dạng số (ví dụ: 12345678)
+            
+            // Ép cấu trúc kết thúc luôn có /iptv/hls.html
+            const baseEndpoint = `${origin}/iptv/hls.html`;
             const randomCode = Math.floor(10000000 + Math.random() * 90000000);
             
-            // Kết quả link hoàn chỉnh: https://nnam0308.github.io/iptv/hls/12345678.m3u8
-            const generatedM3u8 = `${baseDomain}/hls/${randomCode}.m3u8`;
+            // Đồng bộ toàn bộ tham số tùy chỉnh đồ họa vào chuỗi URL Query
+            let queryParams = `?id=${randomCode}&stream=${encodeURIComponent(finalUrl)}`;
+            
+            // Đính kèm cấu hình đồng hồ và logo nếu có
+            queryParams += `&clkPos=${clockPosition.value}&clkFont=${encodeURIComponent(clockFamily.value)}`;
+            if (clockStyleSheet.value.trim() !== "") {
+                queryParams += `&clkCss=${encodeURIComponent(clockStyleSheet.value.trim())}`;
+            }
+            queryParams += `&logoPos=${logoPosition.value}`;
+
+            const generatedUrl = baseEndpoint + queryParams;
 
             videoPlaceholder.style.display = 'flex';
             tvIcon.style.display = 'none';
             loadingIcon.style.display = 'block';
-            monitorStatus.textContent = "Đang kết nối & giải mã luồng phát...";
+            monitorStatus.textContent = "Đang đồng bộ cấu hình lớp phủ hệ thần kinh số...";
 
             if (currentHlsInstance) {
                 currentHlsInstance.destroy();
@@ -512,11 +515,6 @@
                         currentHlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
                             mainVideoPlayer.play().catch(e => console.log(e));
                         });
-                        currentHlsInstance.on(Hls.Events.ERROR, function (event, data) {
-                            if (data.fatal) {
-                                alert("Không thể giải mã luồng M3U8 này. Hãy chắc chắn link hoạt động hoặc không bị chặn CORS.");
-                            }
-                        });
                     } else if (mainVideoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
                         mainVideoPlayer.src = finalUrl;
                         mainVideoPlayer.addEventListener('loadedmetadata', function() {
@@ -525,12 +523,12 @@
                     }
                 }
 
-                // Cập nhật lên Header đoạn text theo cấu trúc mới
-                streamLinkText.textContent = generatedM3u8;
+                streamLinkText.textContent = generatedUrl;
                 streamLinkBox.classList.add('active');
-            }, 1000);
+            }, 800);
         });
 
+        // Áp dụng tạm thời trên màn hình xem trước
         btnApplyCustom.addEventListener('click', () => {
             if (logoUpload.files && logoUpload.files[0]) {
                 const reader = new FileReader();
@@ -558,7 +556,7 @@
             if (clockFamily.value.trim() !== "") {
                 overlayClock.style.fontFamily = clockFamily.value;
             }
-            alert("Đã áp dụng toàn bộ cài đặt đồ họa tùy chỉnh lên màn hình Live Stream!");
+            alert("Đã đồng bộ hóa thiết lập đồ họa cục bộ!");
         });
     </script>
 </body>

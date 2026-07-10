@@ -2,708 +2,511 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Digital TV App UI</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U8 Creator - Neural Expressive</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Material Symbols Rounded -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
-    
-    <!-- Requested Font: YouTube Sans (with Roboto fallback) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=YouTube+Sans&display=swap" rel="stylesheet">
-    
-    <!-- HLS.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
-    <!-- Google Cast SDK -->
-    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-main: #0a0f1d;
+            --bg-card: rgba(13, 25, 48, 0.7);
+            --neon-blue: #00f0ff;
+            --neural-cyan: #00ea91;
+            --text-primary: #f0f5ff;
+            --text-secondary: #7e8fa9;
+            --border-glow: rgba(0, 240, 255, 0.2);
+            --shadow-neural: 0 8px 32px 0 rgba(0, 240, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
         body {
-            font-family: 'YouTube Sans', 'Roboto', sans-serif;
-            background: radial-gradient(66.56% 118.33% at 33.44% 31.3%, rgb(64, 64, 64) 0%, rgb(25, 25, 25) 100%);
-            color: #ffffff;
-            width: 100%;
-            background-attachment: fixed;
+            background: radial-gradient(circle at 50% 50%, #102542 0%, var(--bg-main) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
         }
 
-        /* --- Device Detection CSS Variables --- */
-        :root { --device-type: 'desktop'; }
-        @media (max-width: 767px) and (orientation: portrait) { :root { --device-type: 'mobile-portrait'; } }
-        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) { :root { --device-type: 'mobile-landscape'; } }
-        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) { :root { --device-type: 'tablet-portrait'; } }
-        @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) { :root { --device-type: 'tablet-landscape'; } }
-
-        /* --- Scrollbar Styling --- */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
-
-        html { scroll-behavior: smooth; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* --- NAVIGATION STYLES --- */
-        #app-header {
-            background-image: url('https://images.fptplay53.net/media/photo/2026/01/21/header-web_1768982652107.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        .nav-transition { transition: all 0.3s ease-in-out; }
-        
-        .bg-fixed-theme {
-            background: radial-gradient(66.56% 118.33% at 33.44% 31.3%, rgb(64, 64, 64) 0%, rgb(25, 25, 25) 100%);
-            background-attachment: fixed;
-        }
-
-        .nav-default { border-bottom-color: transparent; box-shadow: none; }
-
-        .nav-scrolled {
-            /* Đã xóa border và shadow */
-            border-bottom-color: transparent;
-            box-shadow: none;
-        }
-        
-        /* Cấu hình chung cho Background Split */
-        .split-bg-common {
-            background-image: url('https://images.fptplay53.net/media/photo/OTT/2026/02/05/block-web-background_1770281046837.png');
-            background-size: 100% auto; /* Quan trọng: width 100%, height tự động theo tỷ lệ */
-            background-repeat: no-repeat;
-            width: 100%;
-            aspect-ratio: 8/1; /* 3840 / 480 = 8. Đảm bảo container cao đúng bằng nửa ảnh */
-        }
-
-        /* Footer lấy phần bottom */
-        footer {
-            background-position: bottom center;
-        }
-        
-        /* Phần trên lấy phần top */
-        #main-bg-top {
-            background-position: top center;
-        }
-
-        /* === CUSTOM PLAYER STYLES === */
-        .material-symbols-rounded {
-            font-size: 24px;
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        .control-glass {
-            background: rgba(20, 20, 20, 0.7);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-        }
-        .control-glass:hover {
-            background: rgba(40, 40, 40, 0.8);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-        .control-glass:active {
-            transform: scale(0.92);
-            background: rgba(60, 60, 60, 0.9);
-        }
-
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1); }
-        }
-        .pop-anim { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-        input[type=range].custom-range {
-            -webkit-appearance: none;
-            background: transparent;
-            height: 4px;
-            cursor: pointer;
-        }
-        input[type=range].custom-range::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            background: #ffffff;
-            margin-top: -4px;
-            transition: transform 0.1s;
-        }
-        input[type=range].custom-range:hover::-webkit-slider-thumb { transform: scale(1.5); }
-        input[type=range].custom-range::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 2px;
-        }
-
-        .quality-menu {
-            position: absolute;
-            background: rgba(25, 25, 25, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            display: none;
-            flex-direction: column;
-            min-width: 120px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-            z-index: 50;
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.2s ease, transform 0.2s ease;
-        }
-        .quality-menu-mobile { top: 100%; right: 0; margin-top: 10px; transform-origin: top right; }
-        .quality-menu-desktop { bottom: 100%; right: 0; margin-bottom: 10px; transform-origin: bottom right; }
-        .quality-menu.show { display: flex; opacity: 1; transform: scale(1); }
-
-        .quality-item {
-            padding: 10px 16px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-            display: flex;
-            justify-content: space-between;
+        /* --- HEADER --- */
+        header {
+            background: rgba(6, 11, 25, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--border-glow);
+            padding: 15px 30px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
             align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .quality-item:hover { background: rgba(255,255,255,0.1); }
-        .quality-item.active { color: #ffffff; font-weight: 700; background: rgba(255,255,255,0.15); } 
 
-        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-        .animate-fade-in { animation: fade-in 0.3s ease-out; }
-
-        .tab-item { white-space: nowrap; transition: all 0.3s ease; font-weight: 600; font-size: 18px; }
-        .tab-item.active { background-color: #ffffff; color: #000000; border: 1px solid #ffffff; box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.2); font-weight: 700; }
-        .tab-item:not(.active):hover { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.2); }
-
-        .channel-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
-        @media (min-width: 640px) { .channel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
-        @media (min-width: 768px) { .channel-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; } }
-        @media (min-width: 1024px) { .channel-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        @media (min-width: 1280px) { .channel-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
-        
-        .player-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: auto; aspect-ratio: 16/9; }
-        @media (min-width: 768px) and (orientation: landscape), (min-width: 1024px) {
-            .player-wrapper { height: calc(100vh - 10rem); aspect-ratio: auto; }
+        .header-left .title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        
-        .mobile-fixed-mode body { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
-        .mobile-fixed-mode main { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-        .mobile-fixed-mode #main-2 { display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }
-        .mobile-fixed-mode #scrollable-content { flex-grow: 1; overflow-y: auto; }
-        
-        .no-cursor { cursor: none; }
-        
-        /* Cast Button Styles */
-        .js-cast-btn.connected { color: #4285f4; /* Google Blue when connected */ }
+
+        .header-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .stream-link-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: var(--neural-cyan);
+            font-family: monospace;
+            font-size: 0.95rem;
+            min-width: 300px;
+            text-align: center;
+            transition: all 0.4s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+            box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        .stream-link-box.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .header-right {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-neural {
+            background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
+            background-size: 200% auto;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(67, 100, 247, 0.4);
+            transition: 0.4s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-neural:hover {
+            background-position: right center;
+            box-shadow: 0 0 25px var(--neon-blue);
+            transform: scale(1.02);
+        }
+
+        /* --- MAIN CONTAINER --- */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-neural);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 25px;
+            color: var(--neon-blue);
+            border-left: 4px solid var(--neural-cyan);
+            padding-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .section-group {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- CONTROL ELEMENT STYLES --- */
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            margin-top: 12px;
+        }
+
+        input[type="text"], input[type="file"], select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        /* Custom File Upload Button */
+        input[type="file"]::file-selector-button {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: 0.3s;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: var(--neon-blue);
+            color: black;
+        }
+
+        /* Grid Layout cho Chọn vị trí */
+        .position-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* --- PREVIEW MONITOR (Mô phỏng Luồng Phát) --- */
+        .preview-monitor {
+            margin-top: 20px;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        .preview-video-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .preview-video-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: rgba(0, 240, 255, 0.3);
+        }
+
+        /* Các thành phần lớp phủ Live (Overlay) */
+        .overlay-logo {
+            position: absolute;
+            max-width: 60px;
+            max-height: 60px;
+            object-fit: contain;
+            display: none;
+            z-index: 10;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            transition: all 0.3s ease;
+        }
+
+        .overlay-clock {
+            position: absolute;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,240,255,0.5);
+            transition: all 0.3s ease;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        /* Class định vị động cho Overlay */
+        .pos-top-left { top: 15px; left: 15px; bottom: auto; right: auto; }
+        .pos-top-right { top: 15px; right: 15px; bottom: auto; left: auto; }
+        .pos-bottom-left { bottom: 15px; left: 15px; top: auto; right: auto; }
+        .pos-bottom-right { bottom: 15px; right: 15px; top: auto; left: auto; }
+
+        .btn-apply {
+            background: linear-gradient(135deg, #00ea91, #00bfa5);
+            color: #050b14;
+            font-weight: 700;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 234, 145, 0.3);
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-apply:hover {
+            box-shadow: 0 0 25px var(--neural-cyan);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
-<body class="min-h-screen landscape:h-auto landscape:overflow-y-auto">
+<body>
 
-    <!-- Header: Đã xóa class border-b -->
-    <header id="app-header" class="fixed top-0 w-full z-50 h-16 nav-default nav-transition">
-        <div class="w-full px-[5%] h-full flex items-center justify-between">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.reload()">
-                <div class="w-8 h-8 bg-white rounded flex items-center justify-center border border-white/10 shadow-sm transition-transform active:scale-95">
-                    <i class="fas fa-play text-black text-xs"></i>
-                </div>
-                <span class="text-xl font-bold tracking-tight text-white">VNTV<span class="text-white/50 font-semibold">Go</span></span>
+    <header>
+        <div class="header-left">
+            <div class="title"><i class="fa-solid fa-network-wired"></i> M3U8 Creator</div>
+        </div>
+        <div class="header-center">
+            <div class="stream-link-box" id="streamLinkBox">
+                <i class="fa-solid fa-link"></i> <span id="streamLinkText">Chưa có luồng phát</span>
             </div>
-            <nav class="hidden md:flex space-x-8 text-[18px] font-semibold text-white/60">
-                <a href="#" class="text-white hover:text-white transition hover:scale-105">Trang chủ</a>
-                <a href="#" class="hover:text-white transition hover:scale-105">Truyền hình</a>
-                <a href="#" class="hover:text-white transition hover:scale-105">Phim truyện</a>
-                <a href="#" class="hover:text-white transition hover:scale-105">Thể thao</a>
-            </nav>
-            <div class="flex items-center gap-4">
-                <button class="text-white/60 hover:text-white transition active:scale-90"><i class="fas fa-search"></i></button>
-                <div class="w-8 h-8 rounded-full bg-[#191919] overflow-hidden border border-white/10 cursor-pointer active:scale-95 transition">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User">
-                </div>
-            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-neural" id="btnStartStream">
+                <i class="fa-solid fa-play"></i> Bắt đầu luồng stream
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="pt-16 w-full">
+    <div class="container">
         
-        <!-- Player Section -->
-        <section id="main-1" class="w-full flex-shrink-0 mt-4 px-[5%]">
-            <div class="player-wrapper">
-                <div id="video-container" class="relative w-auto h-auto max-w-full max-h-full aspect-video bg-transparent overflow-hidden shadow-2xl border border-white/10 group select-none rounded-xl flex justify-center items-center">
-                    <div id="video-placeholder" class="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
-                        <div class="text-center">
-                            <i class="fas fa-circle-notch fa-spin text-4xl text-white mb-4"></i>
-                            <p id="loading-text" class="text-white/50 text-sm font-semibold">Đang tải dữ liệu...</p>
-                        </div>
-                    </div>
-                    <video id="main-video-player" class="w-full h-full object-contain cursor-pointer" playsinline autoplay muted poster=""></video>
-                    
-                    <div id="custom-controls" class="absolute inset-0 z-20 opacity-0 transition-opacity duration-300">
-                        <!-- Mobile Controls -->
-                        <div class="md:hidden flex flex-col justify-between h-full p-4 relative">
-                            <div class="flex justify-between items-start w-full relative z-30">
-                                <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[150px] overflow-hidden">
-                                    <button class="js-mute-btn w-10 h-10 flex items-center justify-center text-white transition active:scale-90 z-10 relative flex-shrink-0"><span class="material-symbols-rounded">volume_up</span></button>
-                                    <div class="w-0 group-hover/vol:w-[100px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3"><input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1"></div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="relative group-quality-container">
-                                        <button class="js-quality-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Chất lượng"><span class="material-symbols-rounded text-[20px] transition-transform duration-300">settings</span></button>
-                                        <div class="quality-menu quality-menu-mobile js-quality-menu"></div>
-                                    </div>
-                                    <button class="js-pip-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Hình trong hình"><span class="material-symbols-rounded text-[20px]">picture_in_picture_alt</span></button>
-                                </div>
-                            </div>
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20"><button class="js-play-btn pointer-events-auto w-16 h-16 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition transform hover:scale-110 active:scale-90 shadow-lg border border-white/10"><span class="material-symbols-rounded text-4xl">play_arrow</span></button></div>
-                            <div class="flex justify-between items-end w-full relative z-30">
-                                <div class="flex items-center gap-3">
-                                    <div class="control-glass px-3 h-9 rounded-full flex items-center justify-center gap-2 select-none"><span class="w-2 h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span><span class="font-bold text-xs tracking-wide text-white">TRỰC TIẾP</span></div>
-                                    <button class="js-speed-indicator control-glass px-3 h-9 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[60px] select-none active:scale-95">0 Kb/s</button>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button class="js-cast-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Phát lên TV"><span class="material-symbols-rounded">cast</span></button>
-                                    <button class="js-fullscreen-btn control-glass w-10 h-10 rounded-full flex items-center justify-center text-white transition active:scale-90" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Desktop Controls -->
-                        <div class="hidden md:flex flex-col justify-between h-full p-6 relative">
-                            <div class="flex items-start"><h2 id="player-channel-name-desktop" class="text-white text-xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] tracking-wide"></h2></div>
-                            <div class="flex justify-between items-end w-full">
-                                <div class="flex items-center gap-3">
-                                    <button class="js-play-btn control-glass w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-white transition flex-shrink-0 active:scale-90"><span class="material-symbols-rounded">play_arrow</span></button>
-                                    <div class="group/vol control-glass h-10 rounded-full flex items-center transition-all duration-300 ease-out w-10 hover:w-[130px] overflow-hidden">
-                                        <button class="js-mute-btn w-10 h-10 flex items-center justify-center hover:bg-white/10 text-white transition z-10 relative flex-shrink-0 active:scale-90"><span class="material-symbols-rounded">volume_up</span></button>
-                                        <div class="w-0 group-hover/vol:w-[80px] overflow-hidden transition-all duration-300 h-full flex items-center opacity-0 group-hover/vol:opacity-100 pr-3 pl-1"><input type="range" class="js-volume-slider custom-range w-full" min="0" max="1" step="0.05" value="1"></div>
-                                    </div>
-                                    <div class="control-glass px-4 h-10 rounded-full flex items-center justify-center gap-2 select-none"><span class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]"></span><span class="font-bold text-sm tracking-wide text-white">TRỰC TIẾP</span></div>
-                                    <button class="js-speed-indicator control-glass px-3 h-10 rounded-full flex items-center justify-center font-mono text-xs text-white/70 hover:text-white transition cursor-pointer min-w-[70px] select-none active:scale-95">0 Kb/s</button>
-                                </div>
-                                <div class="control-glass rounded-2xl flex items-center relative h-10">
-                                    <div class="relative h-full group-quality-container"><button class="js-quality-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-l-2xl transition active:bg-white/20" title="Chất lượng"><span class="material-symbols-rounded transition-transform duration-300">settings</span></button><div class="quality-menu quality-menu-desktop js-quality-menu"></div></div>
-                                    <button class="js-pip-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Hình trong hình"><span class="material-symbols-rounded">picture_in_picture_alt</span></button>
-                                    <button class="js-cast-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white transition active:bg-white/20" title="Phát lên TV"><span class="material-symbols-rounded">cast</span></button>
-                                    <button class="js-fullscreen-btn w-12 h-full flex items-center justify-center hover:bg-white/10 text-white rounded-r-2xl transition active:bg-white/20" title="Toàn màn hình"><span class="material-symbols-rounded">fullscreen</span></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="main-2">
-            <!-- Tabs -->
-            <div id="tabs-container" class="relative flex items-center px-[5%] border-b pt-6 pb-2 cursor-pointer nav-default nav-transition bg-fixed-theme">
-                 <div id="category-tabs" class="flex gap-3 overflow-x-auto scrollbar-hide w-full items-center">
-                    <button class="tab-item active px-5 py-2 rounded-full bg-white text-[18px] border border-white hover:bg-white text-black flex-shrink-0 transition active:scale-95">Đang tải...</button>
-                 </div>
+        <div class="card">
+            <h2><i class="fa-solid fa-sliders"></i> Cấu hình nguồn phát</h2>
+            
+            <div class="section-group">
+                <h3><i class="fa-solid fa-file-video"></i> Phương thức 1: Upload Video</h3>
+                <label for="videoUpload">Chọn tệp tin video (mp4, mov, avi, mkv...):</label>
+                <input type="file" id="videoUpload" accept="video/*">
             </div>
 
-            <div id="scrollable-content" class="portrait:custom-scrollbar">
-                <div id="loading-state" class="text-center py-12 px-[5%]">
-                    <i class="fas fa-circle-notch fa-spin text-3xl text-white"></i>
-                    <p class="text-white/50 mt-2 font-medium">Đang đồng bộ danh sách kênh...</p>
+            <div class="section-group">
+                <h3><i class="fa-solid fa-satellite-dish"></i> Phương thức 2: Tiếp sóng URL M3U8</h3>
+                <label for="m3u8Url">Nhập link nguồn M3U8 hợp lệ:</label>
+                <input type="text" id="m3u8Url" placeholder="https://example.com/live/stream.m3u8">
+            </div>
+
+            <label>Màn hình giám sát (Live Preview):</label>
+            <div class="preview-monitor" id="previewMonitor">
+                <img id="overlayLogo" class="overlay-logo pos-top-left" src="" alt="Logo">
+                <div id="overlayClock" class="overlay-clock pos-top-right">00:00</div>
+
+                <div class="preview-video-placeholder" id="videoPlaceholder">
+                    <i class="fa-solid fa-circle-notch fa-spin" id="loadingIcon" style="display:none;"></i>
+                    <i class="fa-solid fa-tv" id="tvIcon"></i>
+                    <span id="monitorStatus">Tín hiệu trống - Vui lòng chọn nguồn và bấm Bắt đầu</span>
                 </div>
-                <div id="empty-state" class="text-center text-white/40 py-10 hidden px-[5%]"><p id="error-message">Không thể tải dữ liệu kênh</p></div>
-                <div id="channel-list-wrapper" class="animate-fade-in py-6 pb-10 px-[5%]"><div id="channel-grid" class="channel-grid"></div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Cá nhân hóa luồng stream</h2>
+            
+            <div class="section-group">
+                <h3><i class="fa-solid fa-image"></i> Logo Luồng</h3>
+                <label for="logoUpload">Tải ảnh Logo lên:</label>
+                <input type="file" id="logoUpload" accept="image/*">
                 
-                <!-- NEW: Top half of background image -->
-                <div id="main-bg-top" class="split-bg-common"></div>
-
-                <!-- Footer: Bottom half of background image -->
-                <footer class="bg-transparent split-bg-common flex flex-col justify-end pb-8">
-                    <div class="container mx-auto px-4 text-center text-white/30 text-sm font-medium"><p>&copy; 2024 VNTVGo Clone v1.1.</p></div>
-                </footer>
+                <label for="logoPosition">Vị trí hiển thị logo:</label>
+                <select id="logoPosition">
+                    <option value="pos-top-left">Góc trên - bên Trái</option>
+                    <option value="pos-top-right">Góc trên - bên Phải</option>
+                    <option value="pos-bottom-left">Góc dưới - bên Trái</option>
+                    <option value="pos-bottom-right">Góc dưới - bên Phải</option>
+                </select>
             </div>
-        </section>
-    </main>
+
+            <div class="section-group">
+                <h3><i class="fa-solid fa-clock"></i> Đồng hồ hiển thị</h3>
+                <div class="position-grid">
+                    <div>
+                        <label for="clockPosition">Vị trí đồng hồ:</label>
+                        <select id="clockPosition">
+                            <option value="pos-top-right" selected>Góc trên - bên Phải</option>
+                            <option value="pos-top-left">Góc trên - bên Trái</option>
+                            <option value="pos-bottom-left">Góc dưới - bên Trái</option>
+                            <option value="pos-bottom-right">Góc dưới - bên Phải</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="clockFamily">Font-family chữ:</label>
+                        <input type="text" id="clockFamily" value="Orbitron" placeholder="Ví dụ: 'Arial', sans-serif">
+                    </div>
+                </div>
+
+                <label for="clockStyleSheet">Link Stylesheet tùy biến (Google Fonts URL nếu có):</label>
+                <input type="text" id="clockStyleSheet" placeholder="https://fonts.googleapis.com/css2?family=Tên+Font">
+            </div>
+
+            <button class="btn-apply" id="btnApplyCustom">
+                <i class="fa-solid fa-check-double"></i> Áp dụng cài đặt cá nhân hóa
+            </button>
+        </div>
+
+    </div>
 
     <script>
-        const DATA_URL = 'https://raw.githubusercontent.com/nnam0308/iptv/main/data/data.json';
-        let allChannels = [];
-        let uniqueGroups = new Set();
-        let currentGroup = 'Tất cả';
-        let hls = null;
-        let speedInterval = null;
-        let speedUnit = 'kb'; 
-        let deviceState = {
-            isMobile: false,
-            isTablet: false,
-            isDesktop: false,
-            orientation: 'portrait'
-        };
-        let controlsTimeout;
-        let castSession;
-        let currentStreamUrl = '';
+        // DOM Elements
+        const btnStartStream = document.getElementById('btnStartStream');
+        const streamLinkBox = document.getElementById('streamLinkBox');
+        const streamLinkText = document.getElementById('streamLinkText');
         
-        const videoContainer = document.getElementById('video-container');
-        const video = document.getElementById('main-video-player');
-        const controls = document.getElementById('custom-controls');
-        const header = document.getElementById('app-header');
-        const scrollableContent = document.getElementById('scrollable-content');
+        const videoUpload = document.getElementById('videoUpload');
+        const m3u8Url = document.getElementById('m3u8Url');
+        
+        const tvIcon = document.getElementById('tvIcon');
+        const loadingIcon = document.getElementById('loadingIcon');
+        const monitorStatus = document.getElementById('monitorStatus');
+        
+        const logoUpload = document.getElementById('logoUpload');
+        const logoPosition = document.getElementById('logoPosition');
+        const clockPosition = document.getElementById('clockPosition');
+        const clockFamily = document.getElementById('clockFamily');
+        const clockStyleSheet = document.getElementById('clockStyleSheet');
+        
+        const overlayLogo = document.getElementById('overlayLogo');
+        const overlayClock = document.getElementById('overlayClock');
+        const btnApplyCustom = document.getElementById('btnApplyCustom');
 
-        // --- GOOGLE CAST LOGIC ---
-        window['__onGCastApiAvailable'] = function(isAvailable) {
-            if (isAvailable) {
-                initializeCastApi();
-            }
-        };
-
-        function initializeCastApi() {
-            cast.framework.CastContext.getInstance().setOptions({
-                receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-                autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-            });
-
-            cast.framework.CastContext.getInstance().addEventListener(
-                cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-                function(event) {
-                    switch (event.sessionState) {
-                        case cast.framework.SessionState.SESSION_STARTED:
-                        case cast.framework.SessionState.SESSION_RESUMED:
-                            castSession = event.session;
-                            updateCastButtonState(true);
-                            loadMediaToCast();
-                            break;
-                        case cast.framework.SessionState.SESSION_ENDED:
-                            castSession = null;
-                            updateCastButtonState(false);
-                            break;
-                    }
-                }
-            );
+        // Khởi động cập nhật đồng hồ chạy thực tế (Giả lập thời gian thực trên luồng)
+        function updateLiveClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            overlayClock.textContent = `${hours}:${minutes}`;
         }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
 
-        function updateCastButtonState(isConnected) {
-            const btns = document.querySelectorAll('.js-cast-btn');
-            btns.forEach(btn => {
-                if (isConnected) btn.classList.add('connected');
-                else btn.classList.remove('connected');
-            });
-        }
-
-        function loadMediaToCast() {
-            if (!castSession || !currentStreamUrl) return;
-            const channelName = document.getElementById('player-channel-name-desktop').innerText || 'Live Stream';
-            const mediaInfo = new chrome.cast.media.MediaInfo(currentStreamUrl, 'application/x-mpegurl');
-            mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
-            mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-            mediaInfo.metadata.title = channelName;
-            mediaInfo.metadata.images = [{url: 'https://i.imgur.com/7gq8E3m.png'}]; 
-
-            const request = new chrome.cast.media.LoadRequest(mediaInfo);
-            castSession.loadMedia(request).then(
-                function() { console.log('Cast load succeed'); },
-                function(errorCode) { console.log('Cast error code: ' + errorCode); }
-            );
-        }
-
-        bindEvent('.js-cast-btn', 'click', (e) => {
-            e.stopPropagation();
-            showControls();
+        // Xử lý sự kiện: Bắt đầu luồng stream
+        btnStartStream.addEventListener('click', () => {
+            let streamSource = "";
             
-            // Check for window.cast instead of direct cast variable
-            if (window.cast && window.cast.framework) {
-                window.cast.framework.CastContext.getInstance().requestSession();
+            if (videoUpload.files.length > 0) {
+                streamSource = `Tệp cục bộ: ${videoUpload.files[0].name}`;
+            } else if (m3u8Url.value.trim() !== "") {
+                streamSource = m3u8Url.value.trim();
             } else {
-                console.log("Cast framework not ready");
-                // Optional: Show a user-friendly message
-                alert("Google Cast chưa sẵn sàng hoặc không được hỗ trợ trên trình duyệt này.");
+                alert("Vui lòng tải video lên hoặc nhập link URL tiếp sóng trước khi bắt đầu!");
+                return;
             }
+
+            // Tạo mã hash ngẫu nhiên cho link stream m3u8
+            const randomCode = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 6);
+            const currentDomain = window.location.origin === "null" ? "https://neural-stream.io" : window.location.origin;
+            const generatedM3u8 = `${currentDomain}/hls/${randomCode}.m3u8`;
+
+            // Hiển thị hiệu ứng loading nhẹ trên màn hình monitor
+            tvIcon.style.display = 'none';
+            loadingIcon.style.display = 'block';
+            monitorStatus.textContent = "Đang mã hóa luồng tín hiệu...";
+
+            setTimeout(() => {
+                loadingIcon.style.display = 'none';
+                tvIcon.style.display = 'block';
+                tvIcon.className = "fa-solid fa-signal";
+                tvIcon.style.color = "var(--neural-cyan)";
+                monitorStatus.textContent = `Đang phát trực tuyến luồng của bạn.`;
+                
+                // Cập nhật link luồng ở giữa header
+                streamLinkText.textContent = generatedM3u8;
+                streamLinkBox.classList.add('active');
+            }, 1200);
         });
 
-        // --- CONTROLS VISIBILITY LOGIC ---
-        function showControls() {
-            controls.classList.remove('opacity-0');
-            controls.classList.add('opacity-100');
-            videoContainer.style.cursor = 'auto';
-
-            clearTimeout(controlsTimeout);
-            controlsTimeout = setTimeout(() => {
-                controls.classList.remove('opacity-100');
-                controls.classList.add('opacity-0');
-                if (!video.paused) {
-                    videoContainer.style.cursor = 'none';
+        // Xử lý sự kiện: Áp dụng cá nhân hóa (Logo & Đồng hồ)
+        btnApplyCustom.addEventListener('click', () => {
+            // 1. Cập nhật Logo
+            if (logoUpload.files && logoUpload.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    overlayLogo.src = e.target.result;
+                    overlayLogo.style.display = 'block';
                 }
-            }, 5000);
-        }
-
-        videoContainer.addEventListener('mousemove', showControls);
-        videoContainer.addEventListener('click', showControls);
-        videoContainer.addEventListener('touchstart', showControls);
-        
-        function checkUserAgent() {
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            return /android|ipad|iphone|ipod/i.test(ua);
-        }
-
-        function checkLayoutMode() {
-            deviceState.orientation = window.matchMedia("(orientation: portrait)").matches ? 'portrait' : 'landscape';
-            const width = window.innerWidth;
-            deviceState.isMobile = width < 768; 
-            deviceState.isTablet = width >= 768 && width < 1024;
-            deviceState.isDesktop = width >= 1024;
-
-            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
-                document.documentElement.classList.add('mobile-fixed-mode');
-            } else {
-                document.documentElement.classList.remove('mobile-fixed-mode');
-            }
-        }
-        
-        window.addEventListener('resize', checkLayoutMode);
-        window.addEventListener('load', checkLayoutMode);
-
-        function handleScrollEffect() {
-            let scrollTop = 0;
-            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
-                scrollTop = scrollableContent.scrollTop;
-            } else {
-                scrollTop = window.scrollY;
+                reader.readAsDataURL(logoUpload.files[0]);
             }
 
-            if (scrollTop > 10) {
-                header.classList.remove('nav-default');
-                header.classList.add('nav-scrolled');
-            } else {
-                header.classList.add('nav-default');
-                header.classList.remove('nav-scrolled');
-            }
-        }
+            // Cập nhật Vị trí Logo
+            overlayLogo.className = `overlay-logo ${logoPosition.value}`;
 
-        window.addEventListener('scroll', handleScrollEffect);
-        if (scrollableContent) scrollableContent.addEventListener('scroll', handleScrollEffect);
+            // 2. Cập nhật Vị trí Đồng hồ
+            overlayClock.className = `overlay-clock ${clockPosition.value}`;
 
-        function scrollToTop() {
-            if (deviceState.isMobile && deviceState.orientation === 'portrait') {
-                scrollableContent.scrollTo({ top: 0, behavior: "smooth" });
-            } else {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-        }
+            // 3. Tải Font tùy biến (nếu có link stylesheet)
+            if (clockStyleSheet.value.trim() !== "") {
+                const linkId = "dynamic-clock-font";
+                let oldLink = document.getElementById(linkId);
+                if (oldLink) oldLink.remove();
 
-        function bindEvent(selector, event, handler) { document.querySelectorAll(selector).forEach(el => el.addEventListener(event, handler)); }
-        function updateAllText(selector, text) { document.querySelectorAll(selector).forEach(el => el.textContent = text); }
-        function updateAllValue(selector, value) { document.querySelectorAll(selector).forEach(el => el.value = value); }
-
-        function togglePlay() {
-            if (video.paused || video.ended) { 
-                if (hls && hls.liveSyncPosition) video.currentTime = hls.liveSyncPosition;
-                else if (video.seekable && video.seekable.length > 0) {
-                    const seekableEnd = video.seekable.end(video.seekable.length - 1);
-                    if (isFinite(seekableEnd)) video.currentTime = seekableEnd;
-                }
-                video.play(); 
-            } else video.pause(); 
-        }
-
-        bindEvent('.js-play-btn', 'click', (e) => { 
-            e.stopPropagation(); 
-            togglePlay(); 
-            showControls(); 
-        });
-        
-        controls.addEventListener('click', showControls);
-
-        video.addEventListener('play', () => { 
-            document.querySelectorAll('.js-play-btn span').forEach(span => {
-                span.textContent = 'pause';
-                span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
-            });
-            showControls();
-        });
-        video.addEventListener('pause', () => { 
-            document.querySelectorAll('.js-play-btn span').forEach(span => {
-                span.textContent = 'play_arrow';
-                span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
-            });
-            showControls();
-        });
-
-        function updateVolumeIcon() {
-            const val = video.volume;
-            let iconText = 'volume_up';
-            if (video.muted || val === 0) iconText = 'volume_off';
-            else if (val < 0.5) iconText = 'volume_down';
-            document.querySelectorAll('.js-mute-btn span').forEach(span => {
-                if(span.textContent !== iconText) {
-                    span.textContent = iconText;
-                    span.classList.remove('pop-anim'); void span.offsetWidth; span.classList.add('pop-anim');
-                }
-            });
-        }
-
-        bindEvent('.js-volume-slider', 'input', (e) => { 
-            video.volume = e.target.value; 
-            video.muted = false; 
-            updateVolumeIcon(); 
-            updateAllValue('.js-volume-slider', e.target.value); 
-            showControls();
-        });
-        bindEvent('.js-mute-btn', 'click', (e) => { 
-            e.stopPropagation(); 
-            video.muted = !video.muted; 
-            updateAllValue('.js-volume-slider', video.muted ? 0 : video.volume); 
-            updateVolumeIcon(); 
-            showControls();
-        });
-        bindEvent('.js-speed-indicator', 'click', (e) => { e.stopPropagation(); speedUnit = speedUnit === 'kb' ? 'mb' : 'kb'; updateSpeedDisplay(); showControls(); });
-
-        function updateSpeedDisplay() {
-            let text = "0 Kb/s";
-            if (hls && hls.bandwidthEstimate) {
-                const bw = hls.bandwidthEstimate;
-                text = speedUnit === 'kb' ? `${(bw / 1024).toFixed(0)} Kb/s` : `${(bw / 1024 / 1024).toFixed(2)} Mb/s`;
-            }
-            updateAllText('.js-speed-indicator', text);
-        }
-
-        video.addEventListener('loadedmetadata', () => {
-            if (video.videoWidth && video.videoHeight) videoContainer.style.aspectRatio = `${video.videoWidth / video.videoHeight}`;
-            document.getElementById('video-placeholder').classList.add('hidden');
-        });
-
-        bindEvent('.js-pip-btn', 'click', async (e) => {
-            e.stopPropagation();
-            showControls();
-            try { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else if (document.pictureInPictureEnabled) await video.requestPictureInPicture(); } catch (error) {}
-        });
-        
-        bindEvent('.js-fullscreen-btn', 'click', (e) => {
-            e.stopPropagation();
-            showControls();
-            if (!document.fullscreenElement) videoContainer.requestFullscreen().catch(() => {}); else document.exitFullscreen();
-        });
-
-        document.addEventListener('fullscreenchange', async () => {
-            const isFS = !!document.fullscreenElement;
-            document.querySelectorAll('.js-fullscreen-btn span').forEach(span => span.textContent = isFS ? 'close_fullscreen' : 'fullscreen');
-            if (isFS && screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
-            else if (!isFS && screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-        });
-
-        bindEvent('.js-quality-btn', 'click', (e) => {
-            e.stopPropagation();
-            showControls();
-            const btn = e.target.closest('.js-quality-btn');
-            const menu = btn.closest('.group-quality-container').querySelector('.js-quality-menu');
-            document.querySelectorAll('.js-quality-menu').forEach(m => { if (m !== menu) m.classList.remove('show'); });
-            btn.querySelector('span').classList.toggle('rotate-90');
-            menu.classList.toggle('show');
-        });
-        
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.js-quality-btn') && !e.target.closest('.js-quality-menu')) {
-                document.querySelectorAll('.js-quality-menu').forEach(m => m.classList.remove('show'));
-                document.querySelectorAll('.js-quality-btn span').forEach(i => i.classList.remove('rotate-90'));
-            }
-        });
-
-        async function initApp() {
-            try { const res = await fetch(DATA_URL); processData(await res.json()); } catch (e) {
-                document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('empty-state').classList.remove('hidden');
-            }
-        }
-
-        function processData(data) {
-            allChannels = []; uniqueGroups = new Set();
-            if (Array.isArray(data)) {
-                allChannels = data;
-                data.forEach(ch => (ch.group ? ch.group.split(',') : ['Khác']).forEach(g => uniqueGroups.add(g.trim())));
-            } else {
-                Object.keys(data).forEach(main => data[main].forEach(item => {
-                    const norm = { name: item.name, group: item.subgroup ? `${main}, ${item.subgroup}` : main, image: { url: item.logo }, stream_links: { url: item.link } };
-                    allChannels.push(norm); uniqueGroups.add(main);
-                    if (item.subgroup) item.subgroup.split(',').forEach(s => uniqueGroups.add(s.trim()));
-                }));
-            }
-            document.getElementById('loading-state').classList.add('hidden');
-            renderTabs(); renderChannelGrid('Tất cả');
-            if (allChannels.length > 0) updatePlayer(allChannels[0]);
-        }
-
-        function renderTabs() {
-            const wrap = document.getElementById('category-tabs'); wrap.innerHTML = '';
-            ['Tất cả', ...Array.from(uniqueGroups).sort()].forEach(name => {
-                const btn = document.createElement('button');
-                btn.className = `tab-item px-5 py-2 rounded-full border border-transparent cursor-pointer flex-shrink-0 active:scale-95 transition ${currentGroup === name ? 'active' : 'text-white/60 border-white/5 hover:bg-white/10 hover:text-white'}`;
-                btn.textContent = name;
-                btn.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    currentGroup = name; 
-                    document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active')); 
-                    btn.classList.add('active'); 
-                    renderChannelGrid(name); 
-                };
-                wrap.appendChild(btn);
-            });
-        }
-
-        function renderChannelGrid(group) {
-            const grid = document.getElementById('channel-grid'); grid.innerHTML = '';
-            const filtered = group === 'Tất cả' ? allChannels : allChannels.filter(ch => ch.group.split(',').map(g => g.trim()).includes(group));
-            filtered.forEach(ch => {
-                const wrap = document.createElement('div'); wrap.className = "group cursor-pointer flex flex-col gap-2 transition active:scale-[0.98]";
-                const logo = ch.image?.url ? `<img src="${ch.image.url}" class="w-1/2 h-1/2 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300">` : `<span class="text-4xl font-bold text-white/40">${ch.name.charAt(0)}</span>`;
-                wrap.innerHTML = `<div class="bg-[#191919] rounded-xl overflow-hidden relative aspect-[4/3] md:aspect-video shadow-md border border-white/5 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:border-white/20"><div class="absolute inset-0 bg-gradient-to-br from-[#191919] to-[#050506] flex items-center justify-center">${logo}</div><div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]"><div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300"><i class="fas fa-play text-black ml-1"></i></div></div></div><div class="text-center px-1"><h2 class="text-gray-400 group-hover:text-white text-[15.35px] md:text-[18px] font-bold transition-colors truncate">${ch.name}</h2></div>`;
-                wrap.onclick = () => updatePlayer(ch); grid.appendChild(wrap);
-            });
-        }
-
-        function updatePlayer(ch) {
-            currentStreamUrl = ch.stream_links.url; // Save URL for Cast
-            
-            if (speedInterval) clearInterval(speedInterval);
-            document.getElementById('player-channel-name-desktop').innerText = ch.name;
-            document.getElementById('video-placeholder').classList.remove('hidden');
-            document.querySelectorAll('.js-quality-menu').forEach(m => m.innerHTML = '');
-            
-            // If casting, load media to remote player
-            if (castSession) {
-                loadMediaToCast();
+                const newLink = document.createElement('link');
+                newLink.id = linkId;
+                newLink.rel = 'stylesheet';
+                newLink.href = clockStyleSheet.value.trim();
+                document.head.appendChild(newLink);
             }
 
-            if (Hls.isSupported()) {
-                if (hls) hls.destroy();
-                hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-                hls.loadSource(ch.stream_links.url); hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => { 
-                    video.play().catch(() => {});
-                    showControls(); 
-                    generateQualityLevels(hls.levels);
-                    speedInterval = setInterval(updateSpeedDisplay, 1000);
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = ch.stream_links.url; video.addEventListener('loadedmetadata', () => video.play());
+            // Thay đổi font-family của đồng hồ hiển thị
+            if (clockFamily.value.trim() !== "") {
+                overlayClock.style.fontFamily = clockFamily.value;
             }
-        }
 
-        function generateQualityLevels(levels) {
-            document.querySelectorAll('.js-quality-menu').forEach(menu => {
-                menu.innerHTML = '';
-                const items = [{ t: 'Auto', l: -1 }, ...levels.map((l, i) => ({ t: l.height ? `${l.height}p` : `Lv ${i}`, l: i }))];
-                items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = `quality-item ${item.l === -1 ? 'active' : ''}`;
-                    div.innerHTML = `<span>${item.t}</span>${item.l === -1 ? '<span class="material-symbols-rounded text-sm ml-2">check</span>' : ''}`;
-                    div.onclick = () => { hls.currentLevel = item.l; menu.classList.remove('show'); document.querySelectorAll('.js-quality-btn span').forEach(i => i.classList.remove('rotate-90')); };
-                    menu.appendChild(div);
-                });
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', initApp);
+            alert("Đã đồng bộ hóa thiết lập cá nhân hóa lên luồng phát!");
+        });
     </script>
 </body>
 </html>

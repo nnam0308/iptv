@@ -4,10 +4,10 @@
 https://live-a.fptplay53.net/live/media/vtv1/live247-hls-avc/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv2hd" tvg-name="VTV2" tvg-logo="https://i.imgur.com/BVwi3K3.png" group-title="VTV",VTV2
-https://live.fptplay53.net/live/media/v2abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v2abr/live247-hls-avc/v2abr.m3u8
 
 #EXTINF:-1 tvg-id="vtv3hd" tvg-name="VTV3" tvg-logo="https://i.imgur.com/7rLCvgS.png" group-title="VTV",VTV3
-https://live.fptplay53.net/live/media/v3abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v3abr/live247-hls-avc/v3abr.m3u8
 
 #EXTINF:-1 tvg-id="vtv4hd" tvg-name="VTV4" tvg-logo="https://i.imgur.com/9zVTtsA.png" group-title="VTV",VTV4
 https://live-a.fptplay53.net/live/media/vtv4/live247-hls-avc/index.m3u8
@@ -22,19 +22,19 @@ https://live.fptplay53.net/fnxhd1/vtv5tnb_vhls.smil/chunklist.m3u8
 https://live.fptplay53.net/fnxhd1/vtv5taynguyen_vhls.smil/chunklist.m3u8
 
 #EXTINF:-1 tvg-id="vtv6hd" tvg-name="VTV6" tvg-logo="http://hoatv001.ddns.net/logo/VTV6.png" group-title="VTV",VTV6
-https://live.fptplay53.net/live/media/v6abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v6abr/live247-hls-avc/v6abr.m3u8
 
 #EXTINF:-1 tvg-id="vtv7hd" tvg-name="VTV7" tvg-logo="https://i.imgur.com/AgamSNe.png" group-title="VTV",VTV7
-https://live.fptplay53.net/live/media/v7abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v7abr/live247-hls-avc/v7abr.m3u8
 
 #EXTINF:-1 tvg-id="vtv8hd" tvg-name="VTV8" tvg-logo="https://i.imgur.com/lpcltL9.png" group-title="VTV",VTV8
 https://vips-livecdn.fptplay.net/live/media/vtv8/live-hls-avc/index.m3u8
 
 #EXTINF:-1 tvg-id="vtv9hd" tvg-name="VTV9" tvg-logo="https://i.imgur.com/Ex1VkGQ.png" group-title="VTV",VTV9
-https://live.fptplay53.net/live/media/v9abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v9abr/live247-hls-avc/v9abr.m3u8
 
 #EXTINF:-1 tvg-id="vtv10hd" tvg-name="VTV10" tvg-logo="https://raw.githubusercontent.com/ntd249/logochannel/refs/heads/main/VTV10.png" group-title="VTV",VTV10
-https://live.fptplay53.net/live/media/v10abr/live247-hls-avc/index.m3u8
+https://live.fptplay53.net/live/media/v10abr/live247-hls-avc/v10abr.m3u8
 
 #EXTINF:-1 tvg-id="vietnamtoday" tvg-name="VIETNAM TODAY" tvg-logo="https://raw.githubusercontent.com/ntd249/logochannel/refs/heads/main/VTV_VietnamToday.png" group-title="VTV",VIETNAM TODAY
 https://live.fptplay53.net/fnxhd1/vntoday_vhls.smil/chunklist.m3u8
